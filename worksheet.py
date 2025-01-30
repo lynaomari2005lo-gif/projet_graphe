@@ -33,7 +33,7 @@ print(d0)
 print(d00)
 """
 
-"""
+
 print(dir(open_digraph))
 
 # Afficher les informations sur les méthodes de la classe 'node' et de l'instance 'n0'
@@ -51,4 +51,3 @@ for method_name, method_obj in inspect.getmembers(open_digraph, predicate=inspec
     print(f"Docstring: {inspect.getdoc(method_obj)}")  # Afficher la docstring de la méthode
     print(f"Code source: \n{inspect.getsource(method_obj)}")  # Afficher le code source de la méthode
     print(f"Fichier: {inspect.getfile(method_obj)}")  # Afficher le fichier où la méthode est définie
-"""

@@ -22,6 +22,9 @@ class node:
     def __repr__(self):
         return str(self)
     def copy(self):
+        """
+        renvoie une copie du node 
+        """
         return node(self.id,self.label,self.parents,self.children)
     def get_id(self):
         return self.id
@@ -76,8 +79,14 @@ class open_digraph : # for open directed graph
         return str(self)
     @classmethod 
     def empty(cls):
+        """
+        renvoie un graphe vide
+        """
         return open_digraph( [], [], [] )
     def copy(self): #Poser la question si on doit copier les noeuds aussi car si on modifie les edges ça modifie aussi
+        """
+        renvoie une copie du open_digraph 
+        """
         d = open_digraph( [], [], [] )
         d.inputs = self.inputs
         d.outputs = self.outputs
@@ -106,15 +115,27 @@ class open_digraph : # for open directed graph
     def add_output_id(self,idi):
         self.outputs.append(ido)
     def new_id(self):
+        """
+        renvoie un id non utilisé dans le graphe
+        """
         id_n = self.get_node_ids()
         next_id = 0
         while next_id in id_n:
             next_id += 1
         return next_id
     def add_edge(self,src,tgt):
+        """
+        src : node ; noeud source
+        tgt : node ; noeud target
+        rajoute une arrête du noeud d'id src au noeud d'id tgt
+        """
         src.add_child_id(tgt.get_id())
         tgt.add_parent_id(src.get_id())
     def add_edges(self,edges):
+        """
+        edges : int tuple list; liste de paires d'id
+        rajoute une arrête entre chacune des paires
+        """
         for src_id,tgt_id in edges:
             src_node = self.nodes.get(src_id)
             tgt_node = self.nodes.get(tgt_id)
