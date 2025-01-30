@@ -1,4 +1,6 @@
 from modules.open_digraph import *
+import inspect
+
 
 # Graphe quelconque
 
@@ -19,5 +21,34 @@ print(n0)
 
 print(d0)
 
+# Test empty()
 d1 = open_digraph.empty()
 print(d1)
+
+# Test copy
+"""d00 = d0.copy()
+print(d00)
+d0.inputs = [3,1]
+print(d0)
+print(d00)
+"""
+
+"""
+print(dir(open_digraph))
+
+# Afficher les informations sur les méthodes de la classe 'node' et de l'instance 'n0'
+print("Informations sur les méthodes de la classe 'node' :")
+for method_name, method_obj in inspect.getmembers(node, predicate=inspect.isfunction):
+    print(f"\n--- {method_name} ---")
+    print(f"Docstring: {inspect.getdoc(method_obj)}")  # Afficher la docstring de la méthode
+    print(f"Code source: \n{inspect.getsource(method_obj)}")  # Afficher le code source de la méthode
+    print(f"Fichier: {inspect.getfile(method_obj)}")  # Afficher le fichier où la méthode est définie
+
+# Afficher les informations sur les méthodes de la classe 'open_digraph' et de l'instance 'd0'
+print("\nInformations sur les méthodes de la classe 'open_digraph' :")
+for method_name, method_obj in inspect.getmembers(open_digraph, predicate=inspect.isfunction):
+    print(f"\n--- {method_name} ---")
+    print(f"Docstring: {inspect.getdoc(method_obj)}")  # Afficher la docstring de la méthode
+    print(f"Code source: \n{inspect.getsource(method_obj)}")  # Afficher le code source de la méthode
+    print(f"Fichier: {inspect.getfile(method_obj)}")  # Afficher le fichier où la méthode est définie
+"""
