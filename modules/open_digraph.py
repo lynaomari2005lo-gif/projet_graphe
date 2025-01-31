@@ -52,6 +52,43 @@ class node:
             self.parents[n] += 1
         else:
             self.parents[n] = 1
+    def remove_parent_once(self, id):
+        """
+        id : int; id du noeud
+        retire une occurence de l'id donné en paramètre
+        """ 
+        if id in self.parents :
+            self.parents[id]-= 1
+        if self.parents[id] == 0 :
+            self.parents.pop(id)
+     
+    def remove_child_once(self, id):
+        """
+        id : int; id du noeud
+        retire une occurence de l'id donné en paramètre
+        """ 
+        if id in self.children :
+            self.children[id]-= 1
+        if self.children[id] == 0 :
+            self.children.pop(id)
+    def remove_parent_id(self, id):
+        """
+        id : int; id du noeud
+        retire toutes les occurences de l'id donné en paramètre
+
+        """ 
+        if id in self.parents :
+            self.parents.pop(id)
+     
+    def remove_child_id(self, id):
+        """
+        id : int; id du noeud
+        retire toutes les occurences de l'id donné en paramètre
+
+        """ 
+        if id in self.children :
+            self.children.pop(id)
+
 
 class open_digraph : # for open directed graph
     def __init__(self, inputs, outputs, nodes):
@@ -90,7 +127,11 @@ class open_digraph : # for open directed graph
         d = open_digraph( [], [], [] )
         d.inputs = self.inputs
         d.outputs = self.outputs
-        d.nodes = self.nodes
+        dico = self.nodes
+        new_dico = {}
+        for n in dico:
+            new_dico[n] = dico[n].copy()
+        d.nodes = new_dico
         return d
     def get_input_ids(self):
         return self.inputs
@@ -111,8 +152,8 @@ class open_digraph : # for open directed graph
     def set_outputs(self,l):
         self.outputs = l
     def add_input_id(self,idi):
-        self.inputs.append(ido)
-    def add_output_id(self,idi):
+        self.inputs.append(idi)
+    def add_output_id(self,ido):
         self.outputs.append(ido)
     def new_id(self):
         """
@@ -137,10 +178,18 @@ class open_digraph : # for open directed graph
         rajoute une arrête entre chacune des paires
         """
         for src_id,tgt_id in edges:
-            src_node = self.nodes.get(src_id)
-            tgt_node = self.nodes.get(tgt_id)
+            src_node = self.get_node_by_id(src_id)
+            tgt_node = self.get_node_by_id(tgt_id)
             self.add_edge(src_node, tgt_node)
     def add_node(self, label = "", parents = None, children = None):
+        """
+        label : string ; label du noeud, rien par défaut
+        parents : int dict; noeuds du parent
+        children : int dict; noeud de l'enfant
+        rajoute un noeud au graphe et le lie avec les noeuds d'ids parents et children.
+        Si None : attribue un dictionnaire vide.
+        renvoie l'id du nouveau noeud
+        """
         if parents is None:
             parents = {}
         if children is None:
@@ -160,4 +209,64 @@ class open_digraph : # for open directed graph
                 child_node = self.nodes[child_id]
                 for j in range(mul):
                     child_node.add_parent_id(new_id)
+    def remove_edge(self,src,tgt):
+        """
+        src : int ; id du noeud source
+        tgt : int ; id du noeud target
+        retire une arrête entre le noeud source et le noeud target
+        """
+        s = self.get_node_by_id(src)
+        t = self.get_node_by_id(tgt)
+        s.remove_child_once(tgt)
+        t.remove_parent_once(src)
+    def remove_parallel_edges(self,src,tgt):
+        """
+        src : int ; id du noeud source
+        tgt : int ; id du noeud target
+        retire toutes les arrêtes entre le noeud source et le noeud target
+        """
+        s = self.get_node_by_id(src)
+        t = self.get_node_by_id(tgt)
+        s.remove_child_id(tgt)
+        t.remove_parent_id(src)
+    def remove_node_by_id(self,n):
+        """
+        n : int ; id du noeud à supprimer
+        supprime le noeud d'id n dans le graphe
+        """
+        self.nodes.pop(n)
+    def is_well_formed(self):
+        inps = self.get_input_ids()
+        outs = self.get_output_ids()
+        for el in inps:
+            if len(el.get_children()) != 1 or len(el.get_parents()) != 0:
+                raise Exception("un noeud input n'a pas un unique enfant ou a un parent")
+        for el in outs:
+            if len(el.get_children()) != 0 or len(el.get_parents()) != 1:
+                raise Exception("un nselfoeud output n'a pas d'unique parent ou a un fils au moins")
+        nodes = self.get_nodes()
+        inpout = inps + outs
+        for ids in inpout:
+            if ids not in nodes:
+                raise Exception("tous les noeuds de inputs et outputs ne sont pas dans le graphe")
+        for el in nodes:
+            if el != nodes[el].get_id():
+                raise Exception("chaque clé de nodes ne pointe pas vers un noeud d'id la clé")
+        for el in nodes :
+            children = nodes[el].get_children()
+            for c in children :
+                parents = children[c].get_parents()
+                if el not in parents:
+                    raise Exception("le parent ne figure pas dans la liste de parents de l'enfant")
+                if parents[el] != children[c]:
+                    raise Exception("pas la bonne multiplicité")
+        for el in nodes :
+            parents = nodes[el].get_parents()
+            for p in parents :
+                children = parents[p].get_children()
+                if el not in children:
+                    raise Exception("l'enfant ne figure pas dans la liste d'enfants du parent")
+                if children[el] != parents[p]:
+                    raise Exception("pas la bonne multiplicité")
+        
 
