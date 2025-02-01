@@ -16,9 +16,12 @@ class InitTest(unittest.TestCase):
         self.assertIsInstance(n0, node)
         # Test copy()
         n00 = n0.copy()
-        n0.label = "ii"
-        self.assertIsNot(n00,n0)
-        n0.label = "i"
+        n0.set_label("ii")
+        n0.parents = {1:1}
+        self.assertIsNot(n00.label,n0.label)
+        self.assertIsNot(n00.parents,n0.parents)
+        n0.set_label("i")
+        n0.parents = {}
         # Test getteurs
         self.assertEqual(n0.get_id(), 0)
         self.assertEqual(n0.get_label(), 'i')
@@ -64,6 +67,7 @@ class InitTest(unittest.TestCase):
         i1 = node(4, "i1",{},{0:1})
         o0 = node(5,"o0",{1:1},{})
         o1 = node(6,"o1",{2:1},{})
+        t = node(7,"t",{},{})
         nodes = [n0,n1,n2,i0,i1,o0,o1]
         d0 = open_digraph([3,4], [5,6], [n0,n1,n2,i0,i1,o0,o1])
         self.assertEqual(d0.inputs, [3,4])
@@ -79,8 +83,16 @@ class InitTest(unittest.TestCase):
         # Test copy()
         d00 = d0.copy()
         d0.inputs = [3,1]
+        d00.nodes[7] = t
+        d0.nodes[0].set_label("test")
         self.assertIsNot(d00.inputs,d0.inputs)
+        self.assertEqual(d00.nodes[7].get_id(), 7)
+        self.assertEqual(len(d00.nodes), 8)
+        self.assertEqual(len(d0.nodes), 7)
+        self.assertEqual(d0.nodes[0].get_label(), "test")
+        self.assertEqual(d00.nodes[0].get_label(), "a")
         d0.inputs = [3,4]
+        d0.nodes[0].set_label("a")
         #ld00 = d00.get_nodes()
         # Test getteurs
         self.assertEqual(d0.get_input_ids(), [3,4])
@@ -93,20 +105,17 @@ class InitTest(unittest.TestCase):
         # Test new_id
         self.assertEqual(d0.new_id(),7 )
         # Test add_edge
-        """
         d0.add_edge(n0,n2)
         l = d0.get_nodes()
         self.assertEqual(l[0].get_children(),   {1:1, 2:2}) 
         self.assertEqual(l[2].get_parents(), {0:2 , 1:2} )
-        """
         # Test add_edges
-        d00.add_edges([(0,2),(0,1)])
-        l2 = d00.get_nodes()
-        self.assertEqual(l2[0].get_children(), {1:2, 2:2}) 
-        self.assertEqual(l2[2].get_parents(), {0:2 , 1:2} )
+        d0.add_edges([(0,2),(0,1)])
+        l2 = d0.get_nodes()
+        self.assertEqual(l2[0].get_children(), {1:2, 2:3}) 
+        self.assertEqual(l2[2].get_parents(), {0:3 , 1:2} )
         self.assertEqual(l2[1].get_parents(), {0:2})
         # Test add_node
-        # Modifier add_node ?
         g = open_digraph([], [], [])
         g.add_node(label='A')
         g.add_node(label='B')
@@ -116,6 +125,8 @@ class InitTest(unittest.TestCase):
         l3 = g.get_nodes()
         self.assertEqual(l3[2].get_children(), {1:3})
         self.assertEqual(l3[2].get_parents(), {0:2})
+        self.assertEqual(l3[0].get_children(), {2:2})
+        self.assertEqual(l3[1].get_parents(), {2:3})
         self.assertEqual(l3[2].get_id(), 2)
         self.assertEqual(l3[2].get_label(), "C")
         # Test remove_edge
@@ -129,10 +140,31 @@ class InitTest(unittest.TestCase):
         # Test remove_node_by_id
         self.assertEqual(len(l3), 3)
         g.remove_node_by_id(2)
-        l3 = g.get_nodes()
-        self.assertEqual(len(l3), 2)
-        self.assertEqual(l3[0].get_id(), 0)
-        self.assertEqual(l3[1].get_id(), 1)
+        l33 = g.get_nodes()
+        self.assertEqual(len(l33), 2)
+        self.assertEqual(l33[0].get_id(), 0)
+        self.assertEqual(l33[1].get_id(), 1)
+        self.assertEqual(l33[0].get_children(), {})
+        # Test remove_edges
+        # Test remove_several_parallel_edges
+        # Test well_formed
+        # Test copy 2
+        n0 = node(0, 'a', {3:1 , 2:1}, {1:1, 2:1})
+        n1 = node(1, 'b', {0:1}, {1:1 , 5:1})
+        n2 = node(2, 'c', {0:1 , 1:2}, {0:1})
+        d0 = open_digraph([3,4], [5,6], [n0,n1,n2])
+        d02 = d0.copy()
+        d0.add_edges([(0,2),(0,1)])
+        d0.inputs.append(5)
+        l1 = d02.get_nodes()
+        l2 = d0.get_nodes()
+        self.assertEqual(l2[0].get_children(), {1:2, 2:2}) 
+        self.assertEqual(l2[2].get_parents(), {0:2 , 1:2} )
+        self.assertEqual(l2[1].get_parents(), {0:2})
+        self.assertEqual(l1[0].get_children(), {1:1, 2:1}) 
+        self.assertEqual(l1[2].get_parents(), {0:1 , 1:2} )
+        self.assertEqual(l1[1].get_parents(), {0:1})
+        self.assertIsNot(d0.get_input_ids(), d02.get_input_ids())
 
 
 

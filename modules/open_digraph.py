@@ -25,7 +25,7 @@ class node:
         """
         renvoie une copie du node 
         """
-        return node(self.id,self.label,self.parents,self.children)
+        return node(int(self.id),str(self.label),dict(self.parents), dict(self.children))
     def get_id(self):
         return self.id
     def get_label(self):
@@ -120,13 +120,13 @@ class open_digraph : # for open directed graph
         renvoie un graphe vide
         """
         return open_digraph( [], [], [] )
-    def copy(self): #Poser la question si on doit copier les noeuds aussi car si on modifie les edges ça modifie aussi
+    def copy(self):
         """
         renvoie une copie du open_digraph 
         """
         d = open_digraph( [], [], [] )
-        d.inputs = self.inputs
-        d.outputs = self.outputs
+        d.inputs = list(self.inputs)
+        d.outputs = list(self.outputs)
         dico = self.nodes
         new_dico = {}
         for n in dico:
@@ -234,7 +234,27 @@ class open_digraph : # for open directed graph
         n : int ; id du noeud à supprimer
         supprime le noeud d'id n dans le graphe
         """
+        for nd in self.nodes :
+            snd = self.get_node_by_id(nd)
+            if n in snd.get_children():
+                self.remove_parallel_edges(nd,n)
+            if n in snd.get_parents():
+                self.remove_parallel_edges(n,nd)
         self.nodes.pop(n)
+    def remove_edges(self,liste):
+        """
+        liste : (int*int) list; liste de paires (src,tgt)
+        retire une arrête entre toutes les paires (src,tgt)
+        """
+        for src_id,tgt_id in liste:
+            self.remove_edge(src_id,tgt_id)
+    def remove_several_parallel_edges(self,liste):
+        """
+        liste : (int*int) list; liste de paires (src,tgt)
+        retire toutes les arrêtes entre toutes les paires (src,tgt)
+        """
+        for src_id,tgt_id in liste:
+            self.remove_parallel_edges(src_id,tgt_id)
     def is_well_formed(self):
         inps = self.get_input_ids()
         outs = self.get_output_ids()
