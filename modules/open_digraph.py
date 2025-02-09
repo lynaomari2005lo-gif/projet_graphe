@@ -67,10 +67,10 @@ class node:
         id : int; id du noeud
         retire une occurence de l'id donné en paramètre
         """ 
-        if id in self.children :
-            self.children[id]-= 1
         if self.children[id] == 0 :
             self.children.pop(id)
+        if id in self.children :
+            self.children[id]-= 1
     def remove_parent_id(self, id):
         """
         id : int; id du noeud
@@ -141,6 +141,8 @@ class open_digraph : # for open directed graph
         return self.nodes
     def get_nodes(self):
         return [self.nodes[n] for n in self.nodes]
+    def get_nodes_dico(self): #renvoie le dictionnaire ayyant pour clé l'id de chaque noeud
+        return self.nodes
     def get_node_ids(self):
         return [n for n in self.nodes]
     def get_node_by_id(self, i):
@@ -255,38 +257,54 @@ class open_digraph : # for open directed graph
         """
         for src_id,tgt_id in liste:
             self.remove_parallel_edges(src_id,tgt_id)
+
+    def remove_nodes_by_id(self,liste):
+        """
+        liste : (int) list; liste de id des noeuds à supprimer
+        supprime les noeuds du graphe dont l'id est dans la liste
+        """
+        for id in liste:
+             self.remove_node_by_id(id)
+
     def is_well_formed(self):
-        inps = self.get_input_ids()
-        outs = self.get_output_ids()
+        inp_ids = self.get_input_ids()
+        out_ids = self.get_output_ids()
+        nodes_ids = self.get_node_ids()
+        inps = self.get_nodes_by_ids(inp_ids)
+        outs = self.get_nodes_by_ids(out_ids)
+        nodes = self.get_nodes_dico()
+        inpout_ids = inp_ids + out_ids
+        for ids in inpout_ids:
+            if ids not in nodes_ids:
+                return "tous les noeuds de inputs et outputs ne sont pas dans le graphe"
         for el in inps:
             if len(el.get_children()) != 1 or len(el.get_parents()) != 0:
-                raise Exception("un noeud input n'a pas un unique enfant ou a un parent")
+                return "un noeud input n'a pas un unique enfant ou a un parent"
         for el in outs:
             if len(el.get_children()) != 0 or len(el.get_parents()) != 1:
-                raise Exception("un nselfoeud output n'a pas d'unique parent ou a un fils au moins")
-        nodes = self.get_nodes()
-        inpout = inps + outs
-        for ids in inpout:
-            if ids not in nodes:
-                raise Exception("tous les noeuds de inputs et outputs ne sont pas dans le graphe")
+                return "un nselfoeud output n'a pas d'unique parent ou a un fils au moins"
         for el in nodes:
             if el != nodes[el].get_id():
-                raise Exception("chaque clé de nodes ne pointe pas vers un noeud d'id la clé")
+                return "chaque clé de nodes ne pointe pas vers un noeud d'id la clé"
         for el in nodes :
             children = nodes[el].get_children()
             for c in children :
-                parents = children[c].get_parents()
+                parents = self.get_node_by_id(children[c]).get_parents()
                 if el not in parents:
-                    raise Exception("le parent ne figure pas dans la liste de parents de l'enfant")
+                    return "le parent ne figure pas dans la liste de parents de l'enfant"
                 if parents[el] != children[c]:
-                    raise Exception("pas la bonne multiplicité")
+                    return "pas la bonne multiplicité"
         for el in nodes :
             parents = nodes[el].get_parents()
             for p in parents :
-                children = parents[p].get_children()
+                children = self.get_node_by_id(parents[p]).get_children()
                 if el not in children:
-                    raise Exception("l'enfant ne figure pas dans la liste d'enfants du parent")
+                    return "l'enfant ne figure pas dans la liste d'enfants du parent"
                 if children[el] != parents[p]:
-                    raise Exception("pas la bonne multiplicité")
+                    return "pas la bonne multiplicité"
+        return "bon"
+    def assert_is_well_formed(self):
+        if self.is_well_formed() != "bon":
+            raise Exception(self.is_well_formed())
         
 

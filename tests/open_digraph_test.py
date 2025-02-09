@@ -93,7 +93,6 @@ class InitTest(unittest.TestCase):
         self.assertEqual(d00.nodes[0].get_label(), "a")
         d0.inputs = [3,4]
         d0.nodes[0].set_label("a")
-        #ld00 = d00.get_nodes()
         # Test getteurs
         self.assertEqual(d0.get_input_ids(), [3,4])
         self.assertEqual(d0.get_output_ids(), [5,6])
@@ -146,8 +145,38 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l33[1].get_id(), 1)
         self.assertEqual(l33[0].get_children(), {})
         # Test remove_edges
+        gr = open_digraph([], [], [])
+        gr.add_node(label='A')
+        gr.add_node(label='B')
+        gr.add_node(label='C', parents={0: 2}, children={1: 3, 3: 2})
+        gr.add_node(label='D', parents={0: 1, 2: 2}, children={4: 3})
+        gr.add_node(label='E', parents={3: 3, 0: 4}, children={1: 2})
+        gr.remove_edges([(0,4),(2,3)])
+        lgr = gr.get_nodes()
+        self.assertEqual(lgr[0].get_children(),{2: 2, 3: 1, 4: 3})
+        self.assertEqual(lgr[4].get_parents(),{3: 3, 0: 3})
+        self.assertEqual(lgr[3].get_parents(),{0: 1, 2: 1})
         # Test remove_several_parallel_edges
-        # Test well_formed
+        gr.remove_several_parallel_edges([(0,4),(2,3),(0,2)])
+        self.assertEqual(lgr[0].get_children(),{ 3: 1})
+        self.assertEqual(lgr[3].get_parents(),{0: 1})
+        self.assertEqual(lgr[4].get_parents(),{3: 3})
+        # Test removes_nodes_by_id
+        gr.remove_nodes_by_id([0, 3])
+        lgr2 = gr.get_nodes()
+        self.assertEqual(len(lgr2), 3)
+        self.assertEqual(lgr[0].get_children(),{})
+        self.assertEqual(lgr[4].get_parents(),{})
+        # Test is_well_formed
+        a = node(0, 'a', {3:1 , 2:1, 4:1}, {1:1, 2:1})
+        b = node(1, 'b', {0:1}, {1:1 , 5:1, 2:2})
+        c = node(2, 'c', {0:1 , 1:2}, {0:1, 6:1})
+        d = node(3, 'd',{},{0:1})
+        e = node(4, 'e',{},{0:1})
+        f = node(5, 'f',{1:1},{})
+        g = node(6, 'g',{2:1},{})
+        gra_well = open_digraph([3,4], [5,6],[a,b,c,d,e,f,g])
+        self.assertEqual(d0.assert_is_well_formed(), )
         # Test copy 2
         n0 = node(0, 'a', {3:1 , 2:1}, {1:1, 2:1})
         n1 = node(1, 'b', {0:1}, {1:1 , 5:1})
@@ -165,7 +194,8 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l1[2].get_parents(), {0:1 , 1:2} )
         self.assertEqual(l1[1].get_parents(), {0:1})
         self.assertIsNot(d0.get_input_ids(), d02.get_input_ids())
-
+       
+        
 
 
 
