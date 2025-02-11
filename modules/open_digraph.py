@@ -342,3 +342,15 @@ class open_digraph : # for open directed graph
         output_node = node(new_id, "", {id : 1}, {})
         self.nodes[new_id] = output_node
         self.add_output_id(new_id)
+    @classmethod 
+    def random(cls, n, bound, inputs=0, outputs=0, loop_free=False, DAG=False, oriented=False, undirected=False,null_diag=True):
+        m = None 
+        if loop_free:
+            pass
+        elif DAG:
+            m = random_triangular_int_matrix(n,bound,null_diag)
+        elif oriented:
+            m = random_oriented_int_matrix(n,bound,null_diag)
+        elif undirected:
+            m = random_sysmetric_int_matrix(n,bound,null_diag)
+        return graph_from_adjency_matrix(m)
