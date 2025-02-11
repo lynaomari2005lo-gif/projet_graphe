@@ -318,25 +318,25 @@ class open_digraph : # for open directed graph
         crée un nouveau noeud input
         """
         new_id = self.new_id()
-        if id not in self.get_node_ids :
+        if id not in self.get_node_ids() :
             raise Exception("l'id donné ne correspond pas à un noeud dans le graphe")
-        if id in self.get_input_ids :
-           for i in range len(self.inputs) :
+        if id in self.get_input_ids() :
+           for i in range (len(self.inputs) -1) :
                 if self.inputs[i] == id :
                     self.inputs.pop(i)
         input_node = node(new_id, "", {}, {id : 1})
         self.nodes[new_id] = input_node
         self.add_input_id(new_id)
     def add_output_node(self, id):
-         """
+        """
         id : int; id du noeud qui pointe vers le nouveau output node
         crée un nouveau noeud output
         """
         new_id = self.new_id()
-        if id not in self.get_node_ids :
+        if id not in self.get_node_ids() :
             raise Exception("l'id donné ne correspond pas à un noeud dans le graphe")
-        if id in self.get_output_ids :
-            for i in range len(self.outputs) :
+        if id in self.get_output_ids() :
+            for i in range (len(self.outputs) -1) :
                 if self.outputs[i] == id :
                     self.outputs.pop(i)
         output_node = node(new_id, "", {id : 1}, {})

@@ -176,7 +176,14 @@ class InitTest(unittest.TestCase):
         f = node(5, 'f',{1:1},{})
         g = node(6, 'g',{2:1},{})
         gra_well = open_digraph([3,4], [5,6],[a,b,c,d,e,f,g])
-        self.assertEqual(d0.assert_is_well_formed(), )
+        #self.assertEqual(d0.assert_is_well_formed(), )
+        # Test add_input_node et add_output_node
+        gra_well.add_input_node(3)
+        self.assertEqual(gra_well.get_input_ids(),[4,7])
+        gra_well.add_input_node(5)
+        self.assertEqual(gra_well.get_input_ids(),[4,7,8])
+        gra_well.add_output_node(5)
+        self.assertEqual(gra_well.get_output_ids(),[6,9])
         # Test copy 2
         n0 = node(0, 'a', {3:1 , 2:1}, {1:1, 2:1})
         n1 = node(1, 'b', {0:1}, {1:1 , 5:1})
