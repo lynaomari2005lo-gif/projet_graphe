@@ -169,7 +169,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(lgr[4].get_parents(),{})
         # Test is_well_formed
         a = node(0, 'a', {3:1 , 2:1, 4:1}, {1:1, 2:1})
-        b = node(1, 'b', {0:1}, {1:1 , 5:1, 2:2})
+        b = node(1, 'b', {0:1}, { 5:1, 2:2})
         c = node(2, 'c', {0:1 , 1:2}, {0:1, 6:1})
         d = node(3, 'd',{},{0:1})
         e = node(4, 'e',{},{0:1})

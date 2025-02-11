@@ -267,6 +267,9 @@ class open_digraph : # for open directed graph
              self.remove_node_by_id(id)
 
     def is_well_formed(self):
+        """
+        vérifie si un graphe est toujouts "bien formé" ( vérifie la multiplicité, les inputs et outputs, etc.)
+        """
         inp_ids = self.get_input_ids()
         out_ids = self.get_output_ids()
         nodes_ids = self.get_node_ids()
@@ -289,22 +292,53 @@ class open_digraph : # for open directed graph
         for el in nodes :
             children = nodes[el].get_children()
             for c in children :
-                parents = self.get_node_by_id(children[c]).get_parents()
+                parents = self.get_node_by_id(c).get_parents()
                 if el not in parents:
                     return "le parent ne figure pas dans la liste de parents de l'enfant"
                 if parents[el] != children[c]:
-                    return "pas la bonne multiplicité"
+                    return "pas la bonne multiplicité pour un parent"
         for el in nodes :
             parents = nodes[el].get_parents()
             for p in parents :
-                children = self.get_node_by_id(parents[p]).get_children()
+                children = self.get_node_by_id(p).get_children()
                 if el not in children:
                     return "l'enfant ne figure pas dans la liste d'enfants du parent"
                 if children[el] != parents[p]:
-                    return "pas la bonne multiplicité"
+                    return "pas la bonne multiplicité pour un enfant"
         return "bon"
     def assert_is_well_formed(self):
+        """
+        renvoie une erreur si le graphe n'est pas bien formé
+        """
         if self.is_well_formed() != "bon":
             raise Exception(self.is_well_formed())
-        
-
+    def add_input_node(self, id):
+        """
+        id : int; id du noeud vers qui pointe le nouveau input node
+        crée un nouveau noeud input
+        """
+        new_id = self.new_id()
+        if id not in self.get_node_ids :
+            raise Exception("l'id donné ne correspond pas à un noeud dans le graphe")
+        if id in self.get_input_ids :
+           for i in range len(self.inputs) :
+                if self.inputs[i] == id :
+                    self.inputs.pop(i)
+        input_node = node(new_id, "", {}, {id : 1})
+        self.nodes[new_id] = input_node
+        self.add_input_id(new_id)
+    def add_output_node(self, id):
+         """
+        id : int; id du noeud qui pointe vers le nouveau output node
+        crée un nouveau noeud output
+        """
+        new_id = self.new_id()
+        if id not in self.get_node_ids :
+            raise Exception("l'id donné ne correspond pas à un noeud dans le graphe")
+        if id in self.get_output_ids :
+            for i in range len(self.outputs) :
+                if self.outputs[i] == id :
+                    self.outputs.pop(i)
+        output_node = node(new_id, "", {id : 1}, {})
+        self.nodes[new_id] = output_node
+        self.add_output_id(new_id)
