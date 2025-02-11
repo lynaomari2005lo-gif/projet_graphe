@@ -275,7 +275,7 @@ class open_digraph : # for open directed graph
         nodes_ids = self.get_node_ids()
         inps = self.get_nodes_by_ids(inp_ids)
         outs = self.get_nodes_by_ids(out_ids)
-        nodes = self.get_nodes_dico()
+        nodes = self.nodes
         inpout_ids = inp_ids + out_ids
         for ids in inpout_ids:
             if ids not in nodes_ids:
@@ -287,9 +287,10 @@ class open_digraph : # for open directed graph
             if len(el.get_children()) != 0 or len(el.get_parents()) != 1:
                 return "un nselfoeud output n'a pas d'unique parent ou a un fils au moins"
         for el in nodes:
+            # Verification ID
             if el != nodes[el].get_id():
                 return "chaque clé de nodes ne pointe pas vers un noeud d'id la clé"
-        for el in nodes :
+            # Verification Children
             children = nodes[el].get_children()
             for c in children :
                 parents = self.get_node_by_id(c).get_parents()
@@ -297,7 +298,7 @@ class open_digraph : # for open directed graph
                     return "le parent ne figure pas dans la liste de parents de l'enfant"
                 if parents[el] != children[c]:
                     return "pas la bonne multiplicité pour un parent"
-        for el in nodes :
+            # Verification Parents  
             parents = nodes[el].get_parents()
             for p in parents :
                 children = self.get_node_by_id(p).get_children()
@@ -312,6 +313,8 @@ class open_digraph : # for open directed graph
         """
         if self.is_well_formed() != "bon":
             raise Exception(self.is_well_formed())
+        else:
+            return True
     def add_input_node(self, id):
         """
         id : int; id du noeud vers qui pointe le nouveau input node
