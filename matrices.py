@@ -53,3 +53,24 @@ def random_triangular_int_matrix(n,bound,null_diag=True):
 #print(random_triangular_int_matrix(5,20,null_diag=False))
 
 
+def graph_from_adjacency_matrix(matrix):
+    gr = open_digraph([], [], [])
+    for i in range(len(matrix[0]) ):
+        for j in range(len(matrix[0]) ):
+            enfants = {}
+            if matrix[i][j] != 0:
+                enfants[j] = matrix[i][j]
+        gr.add_node(label=chr(i), parents={}, children=enfants)
+    return gr
+
+def test() :
+    gr = graph_from_adjacency_matrix([[0, 1, 1, 0, 0],
+    [0, 0, 0, 1, 2],
+    [0, 0, 0, 2, 0],
+    [1, 0, 0, 0, 1],
+    [0, 0, 0, 0, 0]])
+    nodes = gr.get_nodes_dico()
+    for node in nodes:
+        print(nodes[node].__str__())
+
+test()

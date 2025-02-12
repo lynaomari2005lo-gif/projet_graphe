@@ -328,6 +328,8 @@ class open_digraph : # for open directed graph
                 if self.inputs[i] == id :
                     self.inputs.pop(i)
         input_node = node(new_id, "", {}, {id : 1})
+        nd = self.get_node_by_id(id)
+        nd.add_parent_id(new_id)
         self.nodes[new_id] = input_node
         self.add_input_id(new_id)
     def add_output_node(self, id):
@@ -343,6 +345,8 @@ class open_digraph : # for open directed graph
                 if self.outputs[i] == id :
                     self.outputs.pop(i)
         output_node = node(new_id, "", {id : 1}, {})
+        nd = self.get_node_by_id(id)
+        nd.add_child_id(new_id)
         self.nodes[new_id] = output_node
         self.add_output_id(new_id)
     @classmethod 

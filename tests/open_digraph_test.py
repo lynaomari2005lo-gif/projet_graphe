@@ -191,10 +191,12 @@ class InitTest(unittest.TestCase):
         # Test add_input_node et add_output_node
         gra_well.add_input_node(3)
         self.assertEqual(gra_well.get_input_ids(),[4,7])
+        self.assertEqual(gra_well.assert_is_well_formed(), True )
         gra_well.add_input_node(5)
         self.assertEqual(gra_well.get_input_ids(),[4,7,8])
         gra_well.add_output_node(5)
         self.assertEqual(gra_well.get_output_ids(),[6,9])
+        self.assertEqual(gra_well.assert_is_well_formed(), True )
         # Test copy 2
         n0 = node(0, 'a', {3:1 , 2:1}, {1:1, 2:1})
         n1 = node(1, 'b', {0:1}, {1:1 , 5:1})
