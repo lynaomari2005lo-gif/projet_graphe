@@ -361,3 +361,16 @@ class open_digraph : # for open directed graph
         elif undirected:
             m = random_sysmetric_int_matrix(n,bound,null_diag)
         return graph_from_adjency_matrix(m)
+    def graph_to_dico(self):
+        node_ids = self.get_node_ids()
+        return {node_id: index for index, node_id in enumerate(node_ids)}
+    def adjacency_matrix(self):
+        id_to_index = self.graph_to_dico()
+        n = len(id_to_index)
+        matrix = [[0] * n for _ in range(n)]
+        for node_id, node in self.nodes.items():
+            src_index = id_to_index[node_id]
+            for child_id, multiplicity in node.get_children().items():
+                tgt_index = id_to_index[child_id]
+                matrix[src_index][tgt_index] = multiplicity
+        return matrix

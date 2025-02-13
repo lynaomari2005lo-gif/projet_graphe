@@ -63,6 +63,10 @@ def graph_from_adjacency_matrix(matrix):
             if matrix[i][j] != 0: 
                 for s in range(matrix[i][j]):  
                     gr.get_node_by_id(i).add_child_id(j)
+    for node_id, node in gr.get_id_node_map().items():
+        for child_id, multiplicity in node.get_children().items():
+            gr.get_node_by_id(child_id).add_parent_id(node_id)
+
     return gr
 
 def test():
