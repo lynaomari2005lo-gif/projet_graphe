@@ -116,7 +116,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l2[2].get_parents(), {0:3 , 1:2} )
         self.assertEqual(l2[1].get_parents(), {0:2})
         # Test add_node
-        g = open_digraph([], [], [])
+        g = open_digraph([], [], []) 
         g.add_node(label='A')
         g.add_node(label='B')
         g.add_node(label='C', parents={0: 2}, children={1: 3})
@@ -199,7 +199,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(gra_well.assert_is_well_formed(), True )
         # Test copy 2
         n0 = node(0, 'a', {3:1 , 2:1}, {1:1, 2:1})
-        n1 = node(1, 'b', {0:1}, {1:1 , 5:1})
+        n1 = node(1, 'b', {0:1}, {2:1 , 5:1})
         n2 = node(2, 'c', {0:1 , 1:2}, {0:1})
         d0 = open_digraph([3,4], [5,6], [n0,n1,n2])
         d02 = d0.copy()
@@ -214,6 +214,22 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l1[2].get_parents(), {0:1 , 1:2} )
         self.assertEqual(l1[1].get_parents(), {0:1})
         self.assertIsNot(d0.get_input_ids(), d02.get_input_ids())
+        # test graph_to_dico()
+        dico_test = d0.graph_to_dico()
+        self.assertEqual(dico_test,{0:0,1:1,2:2})
+        # test adjacency_matrix()
+        n0 = node(0, 'a', {3:1 , 4:1}, {1:1, 2:1})
+        n1 = node(1, 'b', {0:1}, {2:2 , 5:1})
+        n2 = node(2, 'c', {0:1 , 1:2}, {6:1})
+        i0 = node(3, "i0",{},{0:1})
+        i1 = node(4, "i1",{},{0:1})
+        o0 = node(5,"o0",{1:1},{})
+        o1 = node(6,"o1",{2:1},{})
+        d0 = open_digraph([3,4], [5,6], [n0,n1,n2,i0,i1,o0,o1])
+        self.assertEqual(d0.adjacency_matrix(),[[0, 1, 1, 0, 0, 0, 0], [0, 0, 2, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]])
+        
+        
+        
        
         
 

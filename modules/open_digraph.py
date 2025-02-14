@@ -1,3 +1,5 @@
+from random import *
+
 class node:
     def __init__(self, identity, label, parents, children):
         """
@@ -46,7 +48,7 @@ class node:
         if(n in self.children):
             self.children[n] += 1
         else:
-            self.children[n] = 1
+            self.children[n] = 1#from matrices import *
     def add_parent_id(self,n):
         if(n in self.parents):
             self.parents[n] += 1
@@ -297,7 +299,7 @@ class open_digraph : # for open directed graph
                 if el not in parents:
                     return "le parent ne figure pas dans la liste de parents de l'enfant"
                 if parents[el] != children[c]:
-                    return "pas la bonne multiplicité pour un parent"
+                    return "pas la bonne multiplicité pour un parrandom_int_matrixent"
             # Verification Parents  
             parents = nodes[el].get_parents()
             for p in parents :
@@ -350,27 +352,165 @@ class open_digraph : # for open directed graph
         self.nodes[new_id] = output_node
         self.add_output_id(new_id)
     @classmethod 
-    def random(cls, n, bound, inputs=0, outputs=0, loop_free=False, DAG=False, oriented=False, undirected=False,null_diag=True):
+    def random(cls, n, bound, inputs=0, outputs=0, loop_free=False, DAG=False,oriented=False, undirected=False):
+        """
+        n : int, taille de la matrice carré
+        bound : int, chiffre max de la matrice
+        inputs : int, nombre d'entrées du graphe (0 par défaut)
+        outputs : int, nombre de sorties du graphe (0 par défaut)
+        loop_free : bool, on spécifie si on veut un graphe sans boucles
+        DAG : bool, on spécifie si on veut un graphe dirigé acyclique
+        oriented : bool, on spécifie si on veut un graphe orienté
+        undirected : bool, on spécifie si on veut un graphe non orienté
+        """
         m = None 
-        if loop_free:
-            pass
-        elif DAG:
-            m = random_triangular_int_matrix(n,bound,null_diag)
+        if DAG:
+            if loop_free:
+                m = random_triangular_int_matrix(n,bound)
+            elif not loop_free:
+                m = random_triangular_int_matrix(n,bound,null_diag = False)
         elif oriented:
-            m = random_oriented_int_matrix(n,bound,null_diag)
+            if loop_free:
+                m = random_oriented_int_matrix(n,bound)
+            elif not loop_free:
+                m = random_oriented_int_matrix(n,bound,null_diag = False)
         elif undirected:
-            m = random_sysmetric_int_matrix(n,bound,null_diag)
+            if loop_free:
+                m = random_sysmetric_int_matrix(n,bound)
+            elif not loop_free:
+                m = random_sysmetric_int_matrix(n,bound,null_diag = False)
+        else:
+            if loop_free:
+                m = random_int_matrix(n,bound)
+            else:
+                m = random_int_matrix(n,bound,null_diag = False)
         return graph_from_adjency_matrix(m)
     def graph_to_dico(self):
+        """
+        renvoie un dictionnaire associant à chaque id de noeud du graphe un unique entier 0 <= i <= nombre de noeud du graphe
+        """
         node_ids = self.get_node_ids()
         return {node_id: index for index, node_id in enumerate(node_ids)}
     def adjacency_matrix(self):
+        """
+        renvoie une matrice 'adjacence du graphe
+        """
         id_to_index = self.graph_to_dico()
         n = len(id_to_index)
-        matrix = [[0] * n for _ in range(n)]
+        matrix = [[0] * n for i in range(n)]
         for node_id, node in self.nodes.items():
             src_index = id_to_index[node_id]
             for child_id, multiplicity in node.get_children().items():
                 tgt_index = id_to_index[child_id]
                 matrix[src_index][tgt_index] = multiplicity
         return matrix
+    
+"""
+
+Fonctions Matrices
+
+"""
+    
+def random_int_list(n,bound):
+    """
+    n : int, taille de la liste
+    bound : int, chiffre max de la liste
+    fonction qui génère une liste avec ses éléments des int tirés aléatoirement entre 0 et bound
+    """
+    liste = []
+    for i in range(n):
+        liste.append(randint(0,bound))
+    return liste
+
+#print(random_int_list(3,6))
+
+def random_int_matrix(n,bound,null_diag=True):
+    """
+    n : int, taille de la matrice carré
+    bound : int, chiffre max de la matrice 
+    null_diag : bool, False si on ne veut pas spécialement que la diagonale de la matrice soit nulle
+    fonction qui génère une matrice n * n avec ses éléments des int tirés aléatoirement entre 0 et bound avec une diagonale nulle ou non
+    """
+    liste = []
+    for i in range(n):
+        if null_diag:
+            l = random_int_list(n,bound)
+            l[i] = 0
+            liste.append(l)
+        else:
+            liste.append(random_int_list(n,bound))
+
+    return liste
+
+#print(random_int_matrix(5,100))
+
+def random_sysmetric_int_matrix(n,bound,null_diag=True):
+    """
+    n : int, taille de la matrice carré
+    bound : int, chiffre max de la matrice
+    null_diag : bool, False si on ne veut pas spécialement que la diagonale de la matrice soit nulle
+    renvoie une matrice symétrique avec une diagonale nulle ou non
+    """
+    m = random_int_matrix(n,bound,null_diag)
+    for i in range(n):
+        for j in range(n):
+            m[i][j] = m[j][ i]
+    return m
+
+#print(random_sysmetric_int_matrix(3,6,null_diag=False))
+
+def random_oriented_int_matrix(n,bound,null_diag=True):
+    """
+        n : int, taille de la matrice carré
+        bound : int, chiffre max de la matrice
+        null_diag : bool, False si on ne veut pas spécialement que la diagonale de la matrice soit nulle
+        renvoie une matrice orientée avec une diagonale nulle ou non
+    """
+    m = random_int_matrix(n,bound,null_diag)
+    for i in range(n):
+        for j in range(n):
+            if  m[i][j] != 0:
+                m[j][i] = 0
+    return m
+
+#print(random_oriented_int_matrix(5,20,null_diag=False))
+
+def random_triangular_int_matrix(n,bound,null_diag=True):
+    """
+        n : int, taille de la matrice carré
+        bound : int, chiffre max de la matrice
+        null_diag : bool, False si on ne veut pas spécialement que la diagonale de la matrice soit nulle
+        renvoie une matrice trianguaire (supérieur ou non)
+    """
+    m = random_int_matrix(n,bound,null_diag)
+    for i in range(n):
+        for j in range(n):
+            if i > j :
+                m[i][j] = 0
+    return m
+
+#print(random_triangular_int_matrix(5,20))
+
+
+def graph_from_adjacency_matrix(matrix):
+    """
+    matrix : list * list, matrice d'adjacenceon spécifie si on veut un graphe
+    renvoie un graphe à partir de la matrice d'adjacence donnée en paramètre
+    """
+    gr = open_digraph([], [], [])
+    nodes = {} 
+    for i in range(len(matrix)):
+        nodes[i] = gr.add_node(label=chr(65 + i), parents={}, children={})
+    for i in range(len(matrix)):
+        for j in range(len(matrix)):
+            if matrix[i][j] != 0: 
+                for s in range(matrix[i][j]):  
+                    gr.get_node_by_id(i).add_child_id(j)
+    for node_id, node in gr.get_id_node_map().items():
+        for child_id, multiplicity in node.get_children().items():
+            gr.get_node_by_id(child_id).add_parent_id(node_id)
+
+    return gr
+
+
+    
