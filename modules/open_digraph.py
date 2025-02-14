@@ -404,6 +404,41 @@ class open_digraph : # for open directed graph
                 tgt_index = id_to_index[child_id]
                 matrix[src_index][tgt_index] = multiplicity
         return matrix
+    def save_as_dot_file(self, path, verbose=False) :
+        f = open (path , 'w')
+        contenu = "digraph G {\n"
+        nodes = self.get_nodes_dico()
+        if verbose == False :
+            for n in nodes :
+                if nodes[n].get_label() != "":
+                    contenu = contenu +"    " + str(nodes[n].get_id()) + " [label=\"" + str(nodes[n].get_label()) + "\"]; \n"
+            for n in nodes :
+                enfants = nodes[n].get_children()
+                for e in enfants :
+                    for i in range(enfants[e]) :
+                        contenu = contenu +"    " + str(nodes[n].get_id()) + "->" + str(e) + ";\n"
+            contenu = contenu + "}"
+        else :
+            for n in nodes :
+                if nodes[n].get_label() != "":
+                    contenu = contenu +"    " + str(nodes[n].get_id()) + " [label=\"" + str(nodes[n].get_label()) + "\""  ",id=" + str(nodes[n].get_id()) + "]; \n"
+            for n in nodes :
+                enfants = nodes[n].get_children()
+                for e in enfants :
+                    for i in range(enfants[e]) :
+                        contenu = contenu +"    " + str(nodes[n].get_id()) + "->" + str(e) + ";\n"
+            contenu = contenu + "}"
+        f.write(contenu)
+        f.close()
+
+
+    def from_dot_file(self, path):
+        f = open (path , 'r ')
+        texte = f.readlines() 
+        f.close()
+        for lignes in texte :
+            
+            return "sis"
     
 """
 
@@ -511,6 +546,19 @@ def graph_from_adjacency_matrix(matrix):
             gr.get_node_by_id(child_id).add_parent_id(node_id)
 
     return gr
+
+def test():
+    gr = graph_from_adjacency_matrix([
+        [0, 1, 1, 0, 0],
+        [0, 0, 0, 1, 2],
+        [0, 0, 0, 2, 0],
+        [1, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0]
+    ])
+    nodes = gr.get_nodes_dico()
+    for node in nodes:
+        print(nodes[node])  
+test()
 
 
     
