@@ -188,6 +188,14 @@ class InitTest(unittest.TestCase):
         gra_well = open_digraph([3,4], [5,6],[a,b,c,d,e,f,g])
         self.assertEqual(d0.assert_is_well_formed(), True )
         self.assertEqual(gra_well.assert_is_well_formed(), True )
+
+        ####
+
+        gra_well.save_as_dot_file("doc_test")
+        gra_well.from_dot_file("doc_test")
+
+        ####
+
         # Test add_input_node et add_output_node
         gra_well.add_input_node(3)
         self.assertEqual(gra_well.get_input_ids(),[4,7])
@@ -214,6 +222,27 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l1[2].get_parents(), {0:1 , 1:2} )
         self.assertEqual(l1[1].get_parents(), {0:1})
         self.assertIsNot(d0.get_input_ids(), d02.get_input_ids())
+        # test random
+        d0i = open_digraph.random(5 , 10, inputs=0, outputs=0, loop_free=False, DAG=False,oriented=False, undirected=True)
+        d2i = open_digraph.random(5 , 10, inputs=0, outputs=0, loop_free=False, DAG=False,oriented=True, undirected=False)
+        d3i = open_digraph.random(5 , 10, inputs=0, outputs=0, loop_free=False, DAG=True,oriented=False, undirected=False)
+        d0i2 = open_digraph.random(5 , 10, inputs=0, outputs=0, loop_free=True, DAG=False,oriented=False, undirected=True)
+        d2i2 = open_digraph.random(5 , 10, inputs=0, outputs=0, loop_free=True, DAG=False,oriented=True, undirected=False)
+        d3i2 = open_digraph.random(5 , 10, inputs=0, outputs=0, loop_free=True, DAG=True,oriented=False, undirected=False)
+        gr = graph_from_adjacency_matrix([
+        [0, 1, 1, 0, 0],
+        [0, 0, 0, 1, 2],
+        [0, 0, 0, 2, 0],
+        [1, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0]
+         ])
+        self.assertEqual(gr.assert_is_well_formed(), True )
+        self.assertEqual(d0i.assert_is_well_formed(), True )
+        self.assertEqual(d2i.assert_is_well_formed(), True )
+        self.assertEqual(d3i.assert_is_well_formed(), True )
+        self.assertEqual(d0i2.assert_is_well_formed(), True )
+        self.assertEqual(d2i2.assert_is_well_formed(), True )
+        self.assertEqual(d3i2.assert_is_well_formed(), True )
         # test graph_to_dico()
         dico_test = d0.graph_to_dico()
         self.assertEqual(dico_test,{0:0,1:1,2:2})

@@ -48,7 +48,7 @@ class node:
         if(n in self.children):
             self.children[n] += 1
         else:
-            self.children[n] = 1#from matrices import *
+            self.children[n] = 1
     def add_parent_id(self,n):
         if(n in self.parents):
             self.parents[n] += 1
@@ -384,7 +384,7 @@ class open_digraph : # for open directed graph
                 m = random_int_matrix(n,bound)
             else:
                 m = random_int_matrix(n,bound,null_diag = False)
-        return graph_from_adjency_matrix(m)
+        return graph_from_adjacency_matrix(m)
     def graph_to_dico(self):
         """
         renvoie un dictionnaire associant à chaque id de noeud du graphe un unique entier 0 <= i <= nombre de noeud du graphe
@@ -412,6 +412,7 @@ class open_digraph : # for open directed graph
             for n in nodes :
                 if nodes[n].get_label() != "":
                     contenu = contenu +"    " + str(nodes[n].get_id()) + " [label=\"" + str(nodes[n].get_label()) + "\"]; \n"
+            contenu += "\n"
             for n in nodes :
                 enfants = nodes[n].get_children()
                 for e in enfants :
@@ -422,6 +423,7 @@ class open_digraph : # for open directed graph
             for n in nodes :
                 if nodes[n].get_label() != "":
                     contenu = contenu +"    " + str(nodes[n].get_id()) + " [label=\"" + str(nodes[n].get_label()) + "\""  ",id=" + str(nodes[n].get_id()) + "]; \n"
+            contenu += "\n"
             for n in nodes :
                 enfants = nodes[n].get_children()
                 for e in enfants :
@@ -430,15 +432,39 @@ class open_digraph : # for open directed graph
             contenu = contenu + "}"
         f.write(contenu)
         f.close()
-
-
+        
     def from_dot_file(self, path):
-        f = open (path , 'r ')
+        f = open (path , 'r')
         texte = f.readlines() 
         f.close()
+        txt = []
+
+        # creation dico { id : label}
         for lignes in texte :
-            
-            return "sis"
+            l = lignes.strip().split(" ")
+            #l = l.split(",")
+            txt.append(l)
+            #print(lignes)
+        #print(txt)
+        for i in range(1,7):
+            dico = {}
+            t = txt[i][1].split(',')
+            t2 = t[0].split("=")
+            dico[int(txt[i][0])] = t2[1].split('\"')[1]
+            print(dico)
+
+        # Création liste de tuple de liens
+        txt2 = []
+        liens = []
+        for i in range(9,len(texte)-1):
+            l = texte[i].strip().split("->")
+            txt2.append(l)
+            liens.append((int(l[0]),int(l[1].strip(';'))))
+        print(txt2)
+        print(liens)
+
+
+
     
 """
 
@@ -526,7 +552,6 @@ def random_triangular_int_matrix(n,bound,null_diag=True):
 
 #print(random_triangular_int_matrix(5,20))
 
-
 def graph_from_adjacency_matrix(matrix):
     """
     matrix : list * list, matrice d'adjacenceon spécifie si on veut un graphe
@@ -541,10 +566,12 @@ def graph_from_adjacency_matrix(matrix):
             if matrix[i][j] != 0: 
                 for s in range(matrix[i][j]):  
                     gr.get_node_by_id(i).add_child_id(j)
+    
     for node_id, node in gr.get_id_node_map().items():
         for child_id, multiplicity in node.get_children().items():
-            gr.get_node_by_id(child_id).add_parent_id(node_id)
-
+            for k in range(multiplicity):
+                gr.get_node_by_id(child_id).add_parent_id(node_id)
+    
     return gr
 
 def test():
@@ -559,6 +586,4 @@ def test():
     for node in nodes:
         print(nodes[node])  
 test()
-
-
     
