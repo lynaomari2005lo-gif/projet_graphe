@@ -90,6 +90,29 @@ class node:
         """ 
         if id in self.children :
             self.children.pop(id)
+    def indegree(self):
+        """
+        renvoie le degré entrant (nombre d'arêtes qui arrivent vers ce noeud)
+        """
+        s = 0
+        for p in self.parents:
+            s += self.parents[p]
+        return s
+
+    def outdegree(self):
+        """
+        renvoie le degré sortant (nombre d'arêtes qui partent de ce noeud)
+        """
+        s = 0
+        for c in self.children:
+            s += self.children[c]
+        return s
+
+    def degree(self):
+        """
+        renvoie le degré total (somme du degré entrant et du degré sortant)
+        """
+        return self.indegree() + self.outdegree()
 
 
 class open_digraph : # for open directed graph
@@ -390,7 +413,7 @@ class open_digraph : # for open directed graph
         renvoie un dictionnaire associant à chaque id de noeud du graphe un unique entier 0 <= i <= nombre de noeud du graphe
         """
         node_ids = self.get_node_ids()
-        return {node_id: index for index, node_id in enumerate(node_ids)}
+        return {node_ids[i]: i for i in range(len(node_ids))}
     def adjacency_matrix(self):
         """
         renvoie une matrice 'adjacence du graphe
@@ -462,6 +485,29 @@ class open_digraph : # for open directed graph
             liens.append((int(l[0]),int(l[1].strip(';'))))
         print(txt2)
         print(liens)
+    def is_cyclic(self):
+        """
+        Vérifie si le graphe est cyclique en supprimant les feuilles (nœuds sans successeurs)
+        et en vérifiant si un cycle reste après cette suppression.
+        """
+        g = self.copy()
+
+        def find_feuilles(graph):
+            return [node for node in graph.get_nodes() if node.get_children() == {}]
+
+        while True:
+            feuilles = find_feuilles(g)
+            
+            if feuilles == []:
+                return True
+            
+            for feuille in feuilles:
+                g.remove_node_by_id(feuille.get_id())
+            
+            if len(g.get_nodes()) == 0:
+                return False
+
+
 
 
 
@@ -586,4 +632,19 @@ def test():
     for node in nodes:
         print(nodes[node])  
 test()
-    
+
+
+"""
+
+Sous-classe Circuit
+
+"""
+
+class bool_circ(open_digraph):
+    def __init__(self, graph): 
+        if not isinstance(graph, open_digraph):  
+            raise TypeError("L'argument doit être une instance de open_digraph") 
+        else:
+            self.graph = graph
+ 
+

@@ -56,6 +56,11 @@ class InitTest(unittest.TestCase):
         self.assertEqual(nt.get_parents(), {2:1})
         nt.remove_child_id(2)
         self.assertEqual(nt.get_children(), {1:2})
+        # Test indegree, outdegree, degree
+        ns = node(10, 's', {3:5 , 2:1}, {1:2, 2:3,})
+        self.assertEqual(ns.indegree(), 6)
+        self.assertEqual(ns.outdegree(), 5)
+        self.assertEqual(ns.degree(), 11)
 
 
 
@@ -255,8 +260,31 @@ class InitTest(unittest.TestCase):
         o0 = node(5,"o0",{1:1},{})
         o1 = node(6,"o1",{2:1},{})
         d0 = open_digraph([3,4], [5,6], [n0,n1,n2,i0,i1,o0,o1])
+        self.assertEqual(d0.assert_is_well_formed(), True )
         self.assertEqual(d0.adjacency_matrix(),[[0, 1, 1, 0, 0, 0, 0], [0, 0, 2, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]])
-        
+        # Test bool_circ
+        bb = bool_circ(d0)
+        # bb = bool_circ(n0) renvoie une erreur car pas un graph
+        # Test is_cyclic()
+        n0 = node(0, 'a', {3: 1, 4: 1}, {1: 1, 2: 1})
+        n1 = node(1, 'b', {0: 1}, {2: 2, 5: 1})
+        n2 = node(2, 'c', {0: 1, 1: 2}, {6: 1})
+        i0 = node(3, "i0", {}, {0: 1})
+        i1 = node(4, "i1", {}, {0: 1})
+        o0 = node(5, "o0", {1: 1}, {})
+        o1 = node(6, "o1", {2: 1}, {})
+        g1 = open_digraph([3,4],[5,6],[n0, n1, n2, i0, i1, o0, o1] )
+        self.assertEqual(g1.is_cyclic(), False)
+        n0 = node(0, 'a', {3: 1, 4: 1, 6:1}, {1: 1, 2: 1})
+        n1 = node(1, 'b', {0: 1}, {2: 2, 5: 1})
+        n2 = node(2, 'c', {0: 1, 1: 2}, {6: 1})
+        i0 = node(3, "i0", {}, {0: 1})
+        i1 = node(4, "i1", {}, {0: 1})
+        o0 = node(5, "o0", {1: 1}, {})
+        o1 = node(6, "o1", {2: 1}, {0:1})
+        g2 = open_digraph([3,4],[5,6],[n0, n1, n2, i0, i1, o0, o1] )
+        self.assertEqual(g2.is_cyclic(), True)
+
         
         
        
