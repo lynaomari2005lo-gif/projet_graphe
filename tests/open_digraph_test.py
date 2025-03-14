@@ -193,14 +193,12 @@ class InitTest(unittest.TestCase):
         gra_well = open_digraph([3,4], [5,6],[a,b,c,d,e,f,g])
         self.assertEqual(d0.assert_is_well_formed(), True )
         self.assertEqual(gra_well.assert_is_well_formed(), True )
-
-        ####
-
+        #Test save_as_dot_file et from_dot_file
         gra_well.save_as_dot_file("doc_test")
-        gra_well.from_dot_file("doc_test")
-
-        ####
-
+        graFromDot = gra_well.from_dot_file("doc_test")
+        self.assertEqual(graFromDot.assert_is_well_formed(), True )
+        graFromDot.save_as_dot_file("doc_test2")
+        gra_well.display()
         # Test add_input_node et add_output_node
         gra_well.add_input_node(3)
         self.assertEqual(gra_well.get_input_ids(),[4,7])

@@ -1,4 +1,5 @@
 from random import *
+import os
 
 class node:
     def __init__(self, identity, label, parents, children):
@@ -428,6 +429,12 @@ class open_digraph : # for open directed graph
                 matrix[src_index][tgt_index] = multiplicity
         return matrix
     def save_as_dot_file(self, path, verbose=False) :
+        """
+        path : string, chemin où enregistrer le fichier
+        verbose : si on spécifie le label d'un noeud celui-ci n'affiche plus son id, lorsque verbose=True on affiche l'id et le label de chaque noeud 
+
+        enregistre le graphe en format.dot à l'endroit spécifier par path
+        """
         f = open (path , 'w')
         contenu = "digraph G {\n"
         nodes = self.get_nodes_dico()
@@ -455,36 +462,38 @@ class open_digraph : # for open directed graph
             contenu = contenu + "}"
         f.write(contenu)
         f.close()
-        
     def from_dot_file(self, path):
+        """
+        path : string, chemin où est enregistré le fichier
+       
+        lit un fichier.dot et crée un open_digraph à partir de lui
+
+        """
         f = open (path , 'r')
         texte = f.readlines() 
         f.close()
-        txt = []
+        nodes = {}
+        edges = []
+        for ligne in texte:
+            ligne = ligne.strip().strip(";")
+            if "->" in ligne:  
+                liens = ligne.split("->")
+                node1 = int(liens[0].strip())
+                node2 = int(liens[1].strip())
+                edges.append((node1, node2))
+            elif "[" in ligne and "]" in ligne: 
+                node_part = ligne.split("[")[0].strip()
+                label_part = ligne.split("label=")[1].split("]")[0].strip(' "')
+                nodes[int(node_part)] = label_part
+        nodes_graph = {node_id: node(node_id, label, {}, {}) for node_id, label in nodes.items()}
+        for parent, child in edges:
+            nodes_graph[parent].add_child_id(child)
+            nodes_graph[child].add_parent_id(parent)
+        a = list(nodes_graph.values()) 
+        return open_digraph([], [], a)
 
-        # creation dico { id : label}
-        for lignes in texte :
-            l = lignes.strip().split(" ")
-            #l = l.split(",")
-            txt.append(l)
-            #print(lignes)
-        #print(txt)
-        for i in range(1,7):
-            dico = {}
-            t = txt[i][1].split(',')
-            t2 = t[0].split("=")
-            dico[int(txt[i][0])] = t2[1].split('\"')[1]
-            print(dico)
-
-        # Création liste de tuple de liens
-        txt2 = []
-        liens = []
-        for i in range(9,len(texte)-1):
-            l = texte[i].strip().split("->")
-            txt2.append(l)
-            liens.append((int(l[0]),int(l[1].strip(';'))))
-        print(txt2)
-        print(liens)
+    def display(self, verbose=False) :
+        os.system("firefox -url https://dreampuf.github.io/GraphvizOnline/#digraph{%0A%09v0 -> v1%3B%0A}")
     def is_cyclic(self):
         """
         Vérifie si le graphe est cyclique en supprimant les feuilles (nœuds sans successeurs)
