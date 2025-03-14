@@ -520,6 +520,38 @@ class open_digraph : # for open directed graph
             
             if len(g.get_nodes()) == 0:
                 return False
+    def min_id(self):
+        """
+        renvoie l'indice min des noeuds du graphe
+        """
+        if not self.nodes:
+            return None
+        return min(self.nodes.keys())
+    
+    def max_id(self):
+        """
+        renvoie l'indice max des noeuds du graphe
+        """
+        if not self.nodes:
+            return None
+        return max(self.nodes.keys())
+    
+    def shift_indices(self, n):
+        """
+        n : int, valeur à ajouter aux indices
+        ajoute n à tous les indices du graphe, n peut être négatif
+        """
+        new_nodes = {}
+        for node_id, node in self.nodes.items():
+            new_id = node_id + n
+            new_node = node.copy()
+            new_node.set_id(new_id)
+            new_node.set_parents({k + n: v for k, v in node.parents.items()})
+            new_node.set_children({k + n: v for k, v in node.children.items()})
+            new_nodes[new_id] = new_node
+        self.nodes = new_nodes
+        self.inputs = [i + n for i in self.inputs]
+        self.outputs = [o + n for o in self.outputs]
 
 
 
@@ -634,6 +666,7 @@ def graph_from_adjacency_matrix(matrix):
     
     return gr
 
+"""
 def test():
     gr = graph_from_adjacency_matrix([
         [0, 1, 1, 0, 0],
@@ -646,6 +679,7 @@ def test():
     for node in nodes:
         print(nodes[node])  
 test()
+"""
 
 
 """

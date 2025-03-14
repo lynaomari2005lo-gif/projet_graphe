@@ -316,6 +316,27 @@ class InitTest(unittest.TestCase):
         gtest3 = open_digraph([3, 4], [5, 6], [n0, n1, n2, i0, i1, o0, o1])
         b3 = bool_circ(gtest3)
         self.assertEqual(b3.is_well_formed(), True)
+        # Test min_id() et max_id()
+        n0 = node(0, 'a', {3:1 , 4:1}, {1:1, 2:1})
+        n1 = node(1, 'b', {0:1}, {2:2 , 5:1})
+        n2 = node(2, 'c', {0:1 , 1:2}, {6:1})
+        i0 = node(3, "i0",{},{0:1})
+        i1 = node(4, "i1",{},{0:1})
+        o0 = node(5,"o0",{1:1},{})
+        o1 = node(6,"o1",{2:1},{})
+        exo67 = open_digraph([3,4], [5,6], [n0,n1,n2,i0,i1,o0,o1])
+        maxi = exo67.max_id()
+        print(maxi)
+        self.assertEqual(maxi,6)
+        mini = exo67.min_id()
+        self.assertEqual(mini,0)
+        # Test shift_indices()
+        exo67.shift_indices(2)
+        liste_n = exo67.get_nodes()
+        for i in range(len(liste_n)):
+            self.assertEqual(liste_n[i].get_id(), i + 2)
+        self.assertEqual(exo67.assert_is_well_formed(), True )
+        
 
         
        
