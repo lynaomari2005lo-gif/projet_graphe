@@ -198,7 +198,7 @@ class InitTest(unittest.TestCase):
         graFromDot = gra_well.from_dot_file("doc_test")
         self.assertEqual(graFromDot.assert_is_well_formed(), True )
         graFromDot.save_as_dot_file("doc_test2")
-        gra_well.display() #ca marche pas sur mon ordi perso
+        gra_well.display("gra_well.pdf")
         # Test add_input_node et add_output_node
         gra_well.add_input_node(3)
         self.assertEqual(gra_well.get_input_ids(),[4,7])
@@ -313,9 +313,9 @@ class InitTest(unittest.TestCase):
         i1 = node(4, "i1", {}, {0: 1})  
         o0 = node(5, "o0", {1: 1}, {})  
         o1 = node(6, "o1", {2: 1}, {})  
-        gtest3 = open_digraph([3, 4], [5, 6], [n0, n1, n2, i0, i1, o0, o1])
+        gtest3 = open_digraph([4], [5, 6], [n0, n1, n2, i1, o0, o1])
         b3 = bool_circ(gtest3)
-        self.assertEqual(b3.is_well_formed(), True)
+        self.assertEqual(b3.assert_is_well_formed(), True)
         # Test min_id() et max_id()
         n0 = node(0, 'a', {3:1 , 4:1}, {1:1, 2:1})
         n1 = node(1, 'b', {0:1}, {2:2 , 5:1})
@@ -336,6 +336,15 @@ class InitTest(unittest.TestCase):
         for i in range(len(liste_n)):
             self.assertEqual(liste_n[i].get_id(), i + 2)
         self.assertEqual(exo67.assert_is_well_formed(), True )
+
+        # Test projet
+        m = random_oriented_int_matrix(5,2)
+        print(m)
+        g = graph_from_adjacency_matrix(m)
+        g.display("t1.pdf")
+        g.add_input_node(1)
+        self.assertEqual(g.assert_is_well_formed(), True )
+        g.display("t2.pdf")
         
 
         
