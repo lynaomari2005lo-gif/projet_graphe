@@ -198,7 +198,7 @@ class InitTest(unittest.TestCase):
         graFromDot = gra_well.from_dot_file("doc_test")
         self.assertEqual(graFromDot.assert_is_well_formed(), True )
         graFromDot.save_as_dot_file("doc_test2")
-        #gra_well.display() ca marche pas sur mon ordi perso
+        gra_well.display() #ca marche pas sur mon ordi perso
         # Test add_input_node et add_output_node
         gra_well.add_input_node(3)
         self.assertEqual(gra_well.get_input_ids(),[4,7])

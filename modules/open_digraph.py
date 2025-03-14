@@ -1,5 +1,4 @@
 from random import *
-import os
 
 class node:
     def __init__(self, identity, label, parents, children):
@@ -493,7 +492,13 @@ class open_digraph : # for open directed graph
         return open_digraph([], [], a)
 
     def display(self, verbose=False) :
-        os.system("firefox -url https://dreampuf.github.io/GraphvizOnline/#digraph{%0A%09v0 -> v1%3B%0A}")
+        import os
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(delete=True, suffix=".dot", mode='w') as temp_dot_file:
+            temp_dot_file_path = temp_dot_file.name 
+            self.save_as_dot_file(temp_dot_file_path, verbose) 
+            os. system(f"dot -Tpdf {temp_dot_file_path} -o graphe.pdf")
     def is_cyclic(self):
         """
         Vérifie si le graphe est cyclique en supprimant les feuilles (nœuds sans successeurs)
