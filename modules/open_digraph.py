@@ -651,9 +651,32 @@ Sous-classe Circuit
 
 class bool_circ(open_digraph):
     def __init__(self, graph): 
+        super().__init__(graph.get_input_ids(), graph.get_output_ids(), graph.get_nodes())
         if not isinstance(graph, open_digraph):  
             raise TypeError("L'argument doit être une instance de open_digraph") 
         else:
             self.graph = graph
+        if not self.is_well_formed():
+            raise ValueError("Le circuit booléen n'est pas bien formé.")
+    def is_well_formed(self):
+        if self.is_cyclic():
+            return False
+        for node in self.get_nodes():
+            label = node.get_label()
+            indeg = node.indegree()
+            outdeg = node.outdegree()
+            if label == '':
+                if indeg != 1:
+                    return False  
+            elif label == '&' or label == '|': 
+                if outdeg != 1:
+                    return False  
+            elif label == '~': 
+                if indeg != 1 or outdeg != 1:
+                    return False 
+            elif label == '^': 
+                if indeg < 2 or outdeg != 1:
+                    return False 
+        return True
  
 

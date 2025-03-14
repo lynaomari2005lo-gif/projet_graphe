@@ -198,7 +198,7 @@ class InitTest(unittest.TestCase):
         graFromDot = gra_well.from_dot_file("doc_test")
         self.assertEqual(graFromDot.assert_is_well_formed(), True )
         graFromDot.save_as_dot_file("doc_test2")
-        gra_well.display()
+        #gra_well.display() ca marche pas sur mon ordi perso
         # Test add_input_node et add_output_node
         gra_well.add_input_node(3)
         self.assertEqual(gra_well.get_input_ids(),[4,7])
@@ -282,8 +282,41 @@ class InitTest(unittest.TestCase):
         o1 = node(6, "o1", {2: 1}, {0:1})
         g2 = open_digraph([3,4],[5,6],[n0, n1, n2, i0, i1, o0, o1] )
         self.assertEqual(g2.is_cyclic(), True)
+        # Test is_well_formed pour circuit boléen
+        #b2 = bool_circ(g2)
+        #self.assertEqual(b2.is_well_formed(), False)
+        # Graphe où une porte "copie" (nœud avec label '') a un degré entrant != 1
+        n0 = node(0, '', {3: 1, 4: 1, 6: 1}, {1: 1, 2: 1})  # Nœud de type "copie"
+        n1 = node(1, '&', {0: 1}, {2: 2, 5: 1})  # Porte ET
+        n2 = node(2, '|', {0: 1, 1: 2}, {6: 1})  # Porte OU
+        i0 = node(3, "i0", {}, {0: 1})  # Entrée
+        i1 = node(4, "i1", {}, {0: 1})  # Entrée
+        o0 = node(5, "o0", {1: 1}, {})  # Sortie
+        o1 = node(6, "o1", {2: 1}, {0: 1})  # Sortie
+        gtest1 = open_digraph([3, 4], [5, 6], [n0, n1, n2, i0, i1, o0, o1])
+        #b1 = bool_circ(gtest1)
+        #self.assertEqual(b1.is_well_formed(), False)
+        # Graphe où une porte ET/OU a un degré sortant != 1
+        n0 = node(0, '', {4: 1}, {1: 1, 2: 1}) 
+        n1 = node(1, '&', {0: 1}, {2: 2, 5: 2})
+        n2 = node(2, '|', {0: 1, 1: 2}, {6: 1}) 
+        i1 = node(4, "i1", {}, {0: 1})  
+        o0 = node(5, "o0", {1: 1}, {})  
+        o1 = node(6, "o1", {2: 1}, {}) 
+        gtest2 = open_digraph([3, 4], [5, 6], [n0, n1, n2, i0, i1, o0, o1])
+        #bt2 = bool_circ(gtest2)
+        #self.assertEqual(bt2.is_well_formed(), False)
+        # Graphe respectant toutes les conditions
+        n0 = node(0, '', {4: 1}, {1: 1, 2: 1}) 
+        n1 = node(1, '&', {0: 1}, { 5: 1})
+        n2 = node(2, '|', {0: 1}, {6: 1})  
+        i1 = node(4, "i1", {}, {0: 1})  
+        o0 = node(5, "o0", {1: 1}, {})  
+        o1 = node(6, "o1", {2: 1}, {})  
+        gtest3 = open_digraph([3, 4], [5, 6], [n0, n1, n2, i0, i1, o0, o1])
+        b3 = bool_circ(gtest3)
+        self.assertEqual(b3.is_well_formed(), True)
 
-        
         
        
         
