@@ -695,7 +695,7 @@ class bool_circ(open_digraph):
             raise TypeError("L'argument doit être une instance de open_digraph") 
         else:
             self.graph = graph
-        if not self.is_well_formed():
+        if not self.graph.assert_is_well_formed():
             raise ValueError("Le circuit booléen n'est pas bien formé.")
     def is_well_formed(self):
         if self.is_cyclic():

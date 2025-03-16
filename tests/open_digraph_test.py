@@ -315,7 +315,7 @@ class InitTest(unittest.TestCase):
         o1 = node(6, "o1", {2: 1}, {})  
         gtest3 = open_digraph([4], [5, 6], [n0, n1, n2, i1, o0, o1])
         b3 = bool_circ(gtest3)
-        self.assertEqual(b3.assert_is_well_formed(), True)
+        self.assertEqual(b3.is_well_formed(), True)
         # Test min_id() et max_id()
         n0 = node(0, 'a', {3:1 , 4:1}, {1:1, 2:1})
         n1 = node(1, 'b', {0:1}, {2:2 , 5:1})
