@@ -341,9 +341,11 @@ class InitTest(unittest.TestCase):
         m = random_oriented_int_matrix(5,2)
         print(m)
         g = graph_from_adjacency_matrix(m)
+        g.save_as_dot_file("t1")
         g.display("t1.pdf")
         g.add_input_node(1)
         self.assertEqual(g.assert_is_well_formed(), True )
+        g.save_as_dot_file("t2")
         g.display("t2.pdf")
         
 

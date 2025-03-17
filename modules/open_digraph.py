@@ -491,14 +491,20 @@ class open_digraph : # for open directed graph
         a = list(nodes_graph.values()) 
         return open_digraph([], [], a)
 
-    def display(self, verbose=False) :
+    def display(self, nom, verbose=False) :
+        """
+        méthode qui affiche directement le graphe
+        verbose : si on spécifie le label d'un noeud celui-ci n'affiche plus son id, lorsque verbose=True on affiche l'id et le label de chaque noeud 
+        nom : nom du fichier où on crée le graphe
+
+        """
         import os
         import tempfile
 
         with tempfile.NamedTemporaryFile(delete=True, suffix=".dot", mode='w') as temp_dot_file:
             temp_dot_file_path = temp_dot_file.name 
             self.save_as_dot_file(temp_dot_file_path, verbose) 
-            os. system(f"dot -Tpdf {temp_dot_file_path} -o graphe.pdf")
+            os. system(f"dot -Tpdf {temp_dot_file_path} -o {nom}")
     def is_cyclic(self):
         """
         Vérifie si le graphe est cyclique en supprimant les feuilles (nœuds sans successeurs)
@@ -698,6 +704,9 @@ class bool_circ(open_digraph):
         if not self.graph.assert_is_well_formed():
             raise ValueError("Le circuit booléen n'est pas bien formé.")
     def is_well_formed(self):
+        """
+        teste si le circuit booléen est bien un circuit booléen(doit être acyclique et respecter les contraintes de degré)
+        """
         if self.is_cyclic():
             return False
         for node in self.get_nodes():
