@@ -310,7 +310,7 @@ class open_digraph : # for open directed graph
                 return "un noeud input n'a pas un unique enfant ou a un parent"
         for el in outs:
             if len(el.get_children()) != 0 or len(el.get_parents()) != 1:
-                return "un nselfoeud output n'a pas d'unique parent ou a un fils au moins"
+                return "un noeud output n'a pas d'unique parent ou a un fils au moins"
         for el in nodes:
             # Verification ID
             if el != nodes[el].get_id():
@@ -322,7 +322,7 @@ class open_digraph : # for open directed graph
                 if el not in parents:
                     return "le parent ne figure pas dans la liste de parents de l'enfant"
                 if parents[el] != children[c]:
-                    return "pas la bonne multiplicité pour un parrandom_int_matrixent"
+                    return "pas la bonne multiplicité pour un parent"
             # Verification Parents  
             parents = nodes[el].get_parents()
             for p in parents :
@@ -652,13 +652,13 @@ def random_triangular_int_matrix(n,bound,null_diag=True):
 
 def graph_from_adjacency_matrix(matrix):
     """
-    matrix : list * list, matrice d'adjacenceon spécifie si on veut un graphe
+    matrix : list * list, matrice d'adjacence
     renvoie un graphe à partir de la matrice d'adjacence donnée en paramètre
     """
     gr = open_digraph([], [], [])
     nodes = {} 
     for i in range(len(matrix)):
-        nodes[i] = gr.add_node(label=chr(65 + i), parents={}, children={})
+        nodes[i] = gr.add_node(label=str(i), parents={}, children={})
     for i in range(len(matrix)):
         for j in range(len(matrix)):
             if matrix[i][j] != 0: 
@@ -701,13 +701,15 @@ class bool_circ(open_digraph):
             raise TypeError("L'argument doit être une instance de open_digraph") 
         else:
             self.graph = graph
-        if not self.graph.assert_is_well_formed():
+        if not self.is_well_formed_cyclic():
             raise ValueError("Le circuit booléen n'est pas bien formé.")
-    def is_well_formed(self):
+    def is_well_formed_cyclic(self):
         """
         teste si le circuit booléen est bien un circuit booléen(doit être acyclique et respecter les contraintes de degré)
         """
         if self.is_cyclic():
+            return False
+        if not self.graph.assert_is_well_formed():
             return False
         for node in self.get_nodes():
             label = node.get_label()

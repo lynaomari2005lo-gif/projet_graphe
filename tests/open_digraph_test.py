@@ -284,7 +284,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(g2.is_cyclic(), True)
         # Test is_well_formed pour circuit boléen
         #b2 = bool_circ(g2)
-        #self.assertEqual(b2.is_well_formed(), False)
+        #self.assertEqual(b2.is_well_formed_cyclic(), False)
         # Graphe où une porte "copie" (nœud avec label '') a un degré entrant != 1
         n0 = node(0, '', {3: 1, 4: 1, 6: 1}, {1: 1, 2: 1})  # Nœud de type "copie"
         n1 = node(1, '&', {0: 1}, {2: 2, 5: 1})  # Porte ET
@@ -295,17 +295,17 @@ class InitTest(unittest.TestCase):
         o1 = node(6, "o1", {2: 1}, {0: 1})  # Sortie
         gtest1 = open_digraph([3, 4], [5, 6], [n0, n1, n2, i0, i1, o0, o1])
         #b1 = bool_circ(gtest1)
-        #self.assertEqual(b1.is_well_formed(), False)
+        #self.assertEqual(b1.is_well_formed_cyclic(), False)
         # Graphe où une porte ET/OU a un degré sortant != 1
         n0 = node(0, '', {4: 1}, {1: 1, 2: 1}) 
         n1 = node(1, '&', {0: 1}, {2: 2, 5: 2})
         n2 = node(2, '|', {0: 1, 1: 2}, {6: 1}) 
         i1 = node(4, "i1", {}, {0: 1})  
-        o0 = node(5, "o0", {1: 1}, {})  
+        o0 = node(5, "o0", {1: 2}, {})  
         o1 = node(6, "o1", {2: 1}, {}) 
-        gtest2 = open_digraph([3, 4], [5, 6], [n0, n1, n2, i0, i1, o0, o1])
+        gtest2 = open_digraph([4], [5, 6], [n0, n1, n2, i1, o0, o1])
         #bt2 = bool_circ(gtest2)
-        #self.assertEqual(bt2.is_well_formed(), False)
+        #self.assertEqual(bt2.is_well_formed_cyclic(), False)
         # Graphe respectant toutes les conditions
         n0 = node(0, '', {4: 1}, {1: 1, 2: 1}) 
         n1 = node(1, '&', {0: 1}, { 5: 1})
@@ -315,7 +315,7 @@ class InitTest(unittest.TestCase):
         o1 = node(6, "o1", {2: 1}, {})  
         gtest3 = open_digraph([4], [5, 6], [n0, n1, n2, i1, o0, o1])
         b3 = bool_circ(gtest3)
-        self.assertEqual(b3.is_well_formed(), True)
+        self.assertEqual(b3.is_well_formed_cyclic(), True)
         # Test min_id() et max_id()
         n0 = node(0, 'a', {3:1 , 4:1}, {1:1, 2:1})
         n1 = node(1, 'b', {0:1}, {2:2 , 5:1})
