@@ -378,6 +378,29 @@ class InitTest(unittest.TestCase):
 
         #Test icompose et compose 
 
+        # Test identity(n)
+
+        g = open_digraph.identity(3)
+        self.assertEqual(g.assert_is_well_formed(), True)
+
+        # Test connected_components()
+
+        n1 = node(1, "N1", {}, {2: 1})
+        n2 = node(2, "N2", {1: 1}, {3: 1})
+        n3 = node(3, "N3", {2: 1}, {})
+        n4 = node(4, "N4", {}, {})
+        n5 = node(5, "N5", {}, {6: 1})
+        n6 = node(6, "N6", {5: 1}, {})
+        g = open_digraph([1], [3], [n1,n2,n3,n4,n5,n6])
+        nbr, dico = g.connected_components()
+        self.assertEqual(nbr,3)
+        self.assertEqual(dico[1],0)
+        self.assertEqual(dico[2],0)
+        self.assertEqual(dico[3],0)
+        self.assertEqual(dico[4],1)
+        self.assertEqual(dico[5],2)
+        self.assertEqual(dico[6],2)
+
         
        
         

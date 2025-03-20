@@ -36,6 +36,10 @@ class node:
         return self.parents
     def get_children(self):
         return self.children
+    def get_idc(self):
+        return [n for n in self.children]
+    def get_idp(self):
+        return [n for n in self.parents]
     def set_id(self,id1):
         self.id = id1
     def set_label(self,lab):
@@ -577,6 +581,7 @@ class open_digraph : # for open directed graph
         return ff
 
     def icompose(self, f):
+        """
         out_f = f.get_output_ids()
         inp_self = self.get_input_ids()
         if len(out_f) != len(inp_self) :
@@ -585,13 +590,49 @@ class open_digraph : # for open directed graph
             for i in out_f :
                 #trouver mes propres inputs et outputs si c donné comme vide et c pas vrai
         #TOdo
+        """
+        pass
+    @classmethod
+    def identity(cls, n):
+        """
+        n : int ; nombre de fils
+        Crée un open_digraph représentant l'identité sur n fils.
+        """
+        inputs = []
+        outputs = []
+        for i in range(n):
+            inputs.append(i)
+            outputs.append(n + i)
+        nodes = []
+        for i in range(n):
+            nodes.append(node(i, str(i), {}, {n+i : 1}))
+        for i in range(n):
+            nodes.append(node(n+i, str(n+i), {i : 1}, {}))
+        return open_digraph(inputs, outputs, nodes)
+    def connected_components(self):
+        """
+        Retourne le nombre de composantes connexes du graphe et un dictionnaire associant
+        chaque id de noeud à un identifiant de composante connexe
+        """
+        idn = self. get_node_ids()
+        visite = []
+        dico = {}
+        nbr = 0
 
+        def parcour(n_id):
+            visite.append(n_id)
+            dico[n_id] = nbr
+            voisins = self.nodes[n_id].get_idc() + self.nodes[n_id].get_idp()
+            for v in voisins:
+                if v not in visite:
+                    parcour(v)
 
+        for n in idn:
+            if n not in visite:
+                parcour(n)
+                nbr +=1
 
-
-
-
-
+        return (nbr, dico)
 
 
     
@@ -730,8 +771,7 @@ class bool_circ(open_digraph):
         super().__init__(graph.get_input_ids(), graph.get_output_ids(), graph.get_nodes())
         if not isinstance(graph, open_digraph):  
             raise TypeError("L'argument doit être une instance de open_digraph") 
-        else:
-            self.graph = graph
+        self.graph = graph
         if not self.is_well_formed_cyclic():
             raise ValueError("Le circuit booléen n'est pas bien formé.")
     def is_well_formed_cyclic(self):
