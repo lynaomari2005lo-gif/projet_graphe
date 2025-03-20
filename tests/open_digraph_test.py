@@ -348,6 +348,35 @@ class InitTest(unittest.TestCase):
         g.save_as_dot_file("t2")
         g.display("t2.pdf")
         
+        #Test iparallel et parallel 
+        n0 = node(0, 'a', {3: 1}, {1: 1, 2: 1})
+        n1 = node(1, 'b', {0: 1}, {2: 2})
+        n2 = node(2, 'c', {0: 1, 1: 2}, {4: 1})
+        n3 = node(3, 'd', {}, {0: 1})
+        n4 = node(4, 'e', {2:1}, {})
+        g = open_digraph([3],[4],[n0, n1, n2, n3, n4] )
+        self.assertEqual(g.assert_is_well_formed(), True)
+        i0 = node(0, "i0", {3: 1}, {1: 1, 2: 1})
+        i1 = node(1, "i1", {0: 1}, {2: 2})
+        i2 = node(2, "i2", {0: 1, 1: 2}, {4: 1})
+        i3 = node(3, "i3", {}, {0: 1})
+        i4 = node(4, "i4", {2:1}, {})
+        g1 = open_digraph([3],[4],[i0, i1, i2, i3, i4] )
+        self.assertEqual(g1.assert_is_well_formed(), True)
+        g.iparallel(g1)
+        self.assertEqual(g.assert_is_well_formed(), True)
+        g.display("test_iparallel.pdf")
+        g1.display("test_iparallel_pasdemodif.pdf")
+        t0 = node(0, "t0", {}, {1: 1})
+        t1 = node(1, "t1", {0: 1}, {})
+        gtest = open_digraph([0],[1],[t0, t1] )
+        gpar = gtest.parallel(g, g1)
+        self.assertEqual(gpar.assert_is_well_formed(), True)
+        gpar.display("test_parallel.pdf")
+        g.display("test_iparallel2.pdf")
+        g1.display("test_iparallel_pasdemodif2.pdf")
+
+        #Test icompose et compose 
 
         
        

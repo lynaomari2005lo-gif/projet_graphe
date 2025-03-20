@@ -166,7 +166,7 @@ class open_digraph : # for open directed graph
         return self.nodes
     def get_nodes(self):
         return [self.nodes[n] for n in self.nodes]
-    def get_nodes_dico(self): #renvoie le dictionnaire ayyant pour clé l'id de chaque noeud
+    def get_nodes_dico(self): #renvoie le dictionnaire ayant pour clé l'id de chaque noeud
         return self.nodes
     def get_node_ids(self):
         return [n for n in self.nodes]
@@ -310,7 +310,7 @@ class open_digraph : # for open directed graph
                 return "un noeud input n'a pas un unique enfant ou a un parent"
         for el in outs:
             if len(el.get_children()) != 0 or len(el.get_parents()) != 1:
-                return "un noeud output n'a pas d'unique parent ou a un fils au moins"
+                return "un noeud output n'a pas d'unique parent ou a un fils output_au moins"
         for el in nodes:
             # Verification ID
             if el != nodes[el].get_id():
@@ -558,6 +558,37 @@ class open_digraph : # for open directed graph
         self.nodes = new_nodes
         self.inputs = [i + n for i in self.inputs]
         self.outputs = [o + n for o in self.outputs]
+
+    def iparallel(self, g):
+        gg = g.copy()
+        nodes_self = self.get_nodes()
+        n = len(nodes_self)
+        gg.shift_indices(n)
+        nodes_gg = gg.get_nodes()
+        if nodes_self == []:
+            self.nodes = gg.get_nodes_dico()
+        else :
+            self.nodes.update(gg.get_nodes_dico())
+            self.add_edge(nodes_self[0], nodes_gg [0])
+
+    def parallel(self,f, g):
+        ff = f.copy()
+        ff.iparallel(g)
+        return ff
+
+    def icompose(self, f):
+        out_f = f.get_output_ids()
+        inp_self = self.get_input_ids()
+        if len(out_f) != len(inp_self) :
+            raise Exception("le nombre d'entrées du graphe ne coïncident pas avec le nb de sorties du graphe donné en paramètre")
+        else :
+            for i in out_f :
+                #trouver mes propres inputs et outputs si c donné comme vide et c pas vrai
+        #TOdo
+
+
+
+
 
 
 
