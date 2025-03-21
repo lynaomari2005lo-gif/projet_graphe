@@ -137,8 +137,8 @@ class open_digraph : # for open directed graph
             inputs_s += "id : " + str(self.inputs[i]) + "\n"
         for i in range(len(self.outputs)):
             outputs_s += "id : " + str(self.outputs[i]) + "\n"
-        for i in range(len(self.nodes)):
-            nodes_s += "id : " + str(self.nodes[i].id) + "\n"
+        for v in self.nodes:
+            nodes_s += "id : " + str(self.nodes[v].id) + "\n"
         chaine = "ids of the input nodes : " + "\n" + inputs_s + "ids of the output nodes : " + "\n" + outputs_s + "ids of each node : " + nodes_s + "\n"
         return chaine
     def __repr__(self):
@@ -314,7 +314,7 @@ class open_digraph : # for open directed graph
                 return "un noeud input n'a pas un unique enfant ou a un parent"
         for el in outs:
             if len(el.get_children()) != 0 or len(el.get_parents()) != 1:
-                return "un noeud output n'a pas d'unique parent ou a un fils output_au moins"
+                return "un noeud output n'a pas d'unique parent ou a un fils"
         for el in nodes:
             # Verification ID
             if el != nodes[el].get_id():
@@ -579,19 +579,27 @@ class open_digraph : # for open directed graph
         ff = f.copy()
         ff.iparallel(g)
         return ff
-
     def icompose(self, f):
-        """
-        out_f = f.get_output_ids()
+        ff = f.copy()
+        out_ff = ff.get_output_ids()
         inp_self = self.get_input_ids()
-        if len(out_f) != len(inp_self) :
-            raise Exception("le nombre d'entrées du graphe ne coïncident pas avec le nb de sorties du graphe donné en paramètre")
+        if len(out_ff) != len(inp_self) :
+            raise Exception("le nombre d'entrées du graphe ne coïncident pas avec le nombre de sorties du graphe donné en paramètre")
         else :
-            for i in out_f :
-                #trouver mes propres inputs et outputs si c donné comme vide et c pas vrai
-        #TOdo
-        """
-        pass
+            nodes_self = self.get_nodes()
+            n = len(nodes_self)
+            ff.shift_indices(n)
+            nodes_gg = ff.get_nodes()
+            self.nodes.update(ff.get_nodes_dico())
+            out_ff = ff.get_output_ids()
+            for i in range(len(out_ff)) :
+                self.add_edge(self.nodes[out_ff[i]],self.nodes[inp_self[i]])
+            self.inputs = ff.get_input_ids()        
+
+    def compose(self, f, g):
+        ff = f.copy()
+        ff.icompose(g)
+        return ff
     @classmethod
     def identity(cls, n):
         """
@@ -633,9 +641,38 @@ class open_digraph : # for open directed graph
                 nbr +=1
 
         return (nbr, dico)
+    def liste_op(self):
+        """
+        """
+        liste = []
+        nbr, dico = self.connected_components()
+        nodes = self.get_nodes()
+        for i in range(nbr):
+            liste_n = []
+            for j in range(len(nodes)): 
+                if dico[nodes[j].get_id()] == i:
+                    liste_n.append(nodes[j])
+            grp = open_digraph(inout(liste_n)[0],inout(liste_n)[1],liste_n)
+            liste.append(grp)
+        return liste
+    def Dijkstra(src, direction = None):
+        Q = [src]
+        dist = {src:0}
+        prev={}
+        while Q != [] :
+            m = min(dist, key = dist.get)
+            u = Q[m] #faut changer
+        return 0
+def inout(liste):
+    inputs = []
+    outputs = []
+    for i in range(len(liste)):
+        if liste[i].get_parents() == {} and liste[i].get_children().values() == [1]:
+            inputs.append(liste[i])
+        if liste[i].get_parents() == [1]and liste[i].get_children() == {}:
+            outputs.append(liste[i])
+    return (inputs,outputs)
 
-
-    
 """
 
 Fonctions Matrices
