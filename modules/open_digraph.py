@@ -564,6 +564,10 @@ class open_digraph : # for open directed graph
         self.outputs = [o + n for o in self.outputs]
 
     def iparallel(self, g):
+        """
+        g : open_digraph 
+        méthode qui ajoute g à self avec un composition en parallèle ( g n'est pas modifié) 
+        """
         gg = g.copy()
         nodes_self = self.get_nodes()
         n = len(nodes_self)
@@ -571,15 +575,27 @@ class open_digraph : # for open directed graph
         nodes_gg = gg.get_nodes()
         if nodes_self == []:
             self.nodes = gg.get_nodes_dico()
+        elif nodes_gg == [] :
+            nodes_self = nodes_self
         else :
             self.nodes.update(gg.get_nodes_dico())
             self.add_edge(nodes_self[0], nodes_gg [0])
 
     def parallel(self,f, g):
+        """
+        f : open_digraph
+        g : open_digraph
+        méthode qui renvoie un nouveau graphe qui est la composition en parallèle de f et g (sans modifier ces derniers)
+        """
         ff = f.copy()
         ff.iparallel(g)
         return ff
+
     def icompose(self, f):
+        """
+        g : open_digraph 
+        méthode qui ajoute g à self avec un composition en séquence ( g n'est pas modifié) 
+        """
         ff = f.copy()
         out_ff = ff.get_output_ids()
         inp_self = self.get_input_ids()
@@ -597,9 +613,15 @@ class open_digraph : # for open directed graph
             self.inputs = ff.get_input_ids()        
 
     def compose(self, f, g):
+        """
+        f : open_digraph
+        g : open_digraph
+        méthode qui renvoie un nouveau graphe qui est la composition en séquence de f et g (sans modifier ces derniers)
+        """
         ff = f.copy()
         ff.icompose(g)
         return ff
+
     @classmethod
     def identity(cls, n):
         """
@@ -655,14 +677,29 @@ class open_digraph : # for open directed graph
             grp = open_digraph(inout(liste_n)[0],inout(liste_n)[1],liste_n)
             liste.append(grp)
         return liste
+
     def Dijkstra(src, direction = None):
         Q = [src]
         dist = {src:0}
         prev={}
         while Q != [] :
-            m = min(dist, key = dist.get)
-            u = Q[m] #faut changer
-        return 0
+            u = min(Q, key=lambda node: dist.get(node, float('inf')))
+            Q.remove(u)
+            neighbours = []
+            if ( direction == None):
+                neighbours = self.get_node_by_id(u).get_children() + u.get_parents()
+            elif ( direction == 1):
+                neighbours = self.get_node_by_id(u).get_children()
+            elif ( direction == -1):
+                neighbours = self.get_node_by_id(u).get_parents()
+            for v,multiplicité in neighbours :
+                if v not in dist :
+                    Q.append(v)
+                if dist.get(v, float('inf')) > dist[u] + multiplicité:
+                    dist[v] = dist[u] + multiplicité
+                    prev[v] = u
+        return dist, prev
+
 def inout(liste):
     inputs = []
     outputs = []

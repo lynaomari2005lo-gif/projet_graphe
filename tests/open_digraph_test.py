@@ -326,7 +326,7 @@ class InitTest(unittest.TestCase):
         o1 = node(6,"o1",{2:1},{})
         exo67 = open_digraph([3,4], [5,6], [n0,n1,n2,i0,i1,o0,o1])
         maxi = exo67.max_id()
-        print(maxi)
+        #print(maxi)
         self.assertEqual(maxi,6)
         mini = exo67.min_id()
         self.assertEqual(mini,0)
@@ -339,7 +339,7 @@ class InitTest(unittest.TestCase):
 
         # Test projet
         m = random_oriented_int_matrix(5,2)
-        print(m)
+        #print(m)
         g = graph_from_adjacency_matrix(m)
         g.save_as_dot_file("t1")
         g.display("t1.pdf")
@@ -363,6 +363,10 @@ class InitTest(unittest.TestCase):
         i4 = node(4, "i4", {2:1}, {})
         g1 = open_digraph([3],[4],[i0, i1, i2, i3, i4] )
         self.assertEqual(g1.assert_is_well_formed(), True)
+        g_vide = open_digraph([],[],[] )
+        self.assertEqual(g_vide.assert_is_well_formed(), True)
+        g.iparallel(g_vide)
+        g.display("test_iparallel_elmntneutregrphvide.pdf")
         g.iparallel(g1)
         self.assertEqual(g.assert_is_well_formed(), True)
         g.display("test_iparallel.pdf")
@@ -375,6 +379,7 @@ class InitTest(unittest.TestCase):
         gpar.display("test_parallel.pdf")
         g.display("test_iparallel2.pdf")
         g1.display("test_iparallel_pasdemodif2.pdf")
+        g_vide = open_digraph([],[],[] )
 
         #Test icompose et compose 
         n0 = node(0, 'a', {3: 1}, {1: 1, 2: 1})
@@ -464,10 +469,24 @@ class InitTest(unittest.TestCase):
         c1 = open_digraph([], [], [n1, n2, n3])
         c2 = open_digraph([], [], [n4])
         c3 = open_digraph([5], [6], [n5, n6])
-        print(g)
+        #print(g)
         #self.assertEqual(l[0].get_inputs(), c1.get_inputs())
         #self.assertEqual(l[1], c1)
         #self.assertEqual(l[0], c1)
+
+        #Test Dijkstra 
+        n0 = node(0, 'a', {3: 1}, {1: 1, 2: 1})
+        n1 = node(1, 'b', {0: 1}, {2: 2})
+        n2 = node(2, 'c', {0: 1, 1: 2}, {4: 1})
+        n3 = node(3, 'd', {}, {0: 1})
+        n4 = node(4, 'e', {2:1}, {})
+        g = open_digraph([3],[4],[n0, n1, n2, n3, n4] )
+        self.assertEqual(g.assert_is_well_formed(), True)
+        print("test Dijkstra")
+        a, b = g.Dijkstra(n0)
+        print(a)
+        print(b)
+
 
        
         
