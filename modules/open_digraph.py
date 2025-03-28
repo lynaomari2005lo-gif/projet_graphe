@@ -139,7 +139,7 @@ class open_digraph : # for open directed graph
             outputs_s += "id : " + str(self.outputs[i]) + "\n"
         for v in self.nodes:
             nodes_s += "id : " + str(self.nodes[v].id) + "\n"
-        chaine = "ids of the input nodes : " + "\n" + inputs_s + "ids of the output nodes : " + "\n" + outputs_s + "ids of each node : " + nodes_s + "\n"
+        chaine = "ids of the input nodes : " + "\n" + inputs_s + "ids of the output nodes : " + "\n" + outputs_s + "ids of each node : " + "\n" + nodes_s + "\n"
         return chaine
     def __repr__(self):
         return str(self)
@@ -674,40 +674,19 @@ class open_digraph : # for open directed graph
             for j in range(len(nodes)): 
                 if dico[nodes[j].get_id()] == i:
                     liste_n.append(nodes[j])
-            grp = open_digraph(inout(liste_n)[0],inout(liste_n)[1],liste_n)
+            p,e = inout(liste_n)
+            grp = open_digraph(p,e,liste_n)
             liste.append(grp)
         return liste
-
-    def Dijkstra(src, direction = None):
-        Q = [src]
-        dist = {src:0}
-        prev={}
-        while Q != [] :
-            u = min(Q, key=lambda node: dist.get(node, float('inf')))
-            Q.remove(u)
-            neighbours = []
-            if ( direction == None):
-                neighbours = self.get_node_by_id(u).get_children() + u.get_parents()
-            elif ( direction == 1):
-                neighbours = self.get_node_by_id(u).get_children()
-            elif ( direction == -1):
-                neighbours = self.get_node_by_id(u).get_parents()
-            for v,multiplicité in neighbours :
-                if v not in dist :
-                    Q.append(v)
-                if dist.get(v, float('inf')) > dist[u] + multiplicité:
-                    dist[v] = dist[u] + multiplicité
-                    prev[v] = u
-        return dist, prev
 
 def inout(liste):
     inputs = []
     outputs = []
     for i in range(len(liste)):
-        if liste[i].get_parents() == {} and liste[i].get_children().values() == [1]:
-            inputs.append(liste[i])
-        if liste[i].get_parents() == [1]and liste[i].get_children() == {}:
-            outputs.append(liste[i])
+        if len(liste[i].get_parents()) == 0 and list(liste[i].get_children().values()) == [1]:
+            inputs.append(liste[i].get_id())
+        if list(liste[i].get_parents().values()) == [1] and len(liste[i].get_children()) == 0:
+            outputs.append(liste[i].get_id())
     return (inputs,outputs)
 
 """

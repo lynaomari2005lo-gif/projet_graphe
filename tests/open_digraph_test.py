@@ -466,14 +466,17 @@ class InitTest(unittest.TestCase):
         g = open_digraph([5], [6], [n1,n2,n3,n4,n5,n6])
         self.assertEqual(g.assert_is_well_formed(), True)
         l = g.liste_op()
-        c1 = open_digraph([], [], [n1, n2, n3])
+        c1 = open_digraph([1], [3], [n1, n2, n3])
         c2 = open_digraph([], [], [n4])
         c3 = open_digraph([5], [6], [n5, n6])
-        #print(g)
-        #self.assertEqual(l[0].get_inputs(), c1.get_inputs())
-        #self.assertEqual(l[1], c1)
-        #self.assertEqual(l[0], c1)
+        self.assertEqual(l[0].get_input_ids(), c1.get_input_ids())
+        self.assertEqual(l[1].get_input_ids(), c2.get_input_ids())
+        self.assertEqual(l[2].get_input_ids(), c3.get_input_ids())
+        self.assertEqual(l[0].assert_is_well_formed(), True)
+        self.assertEqual(l[1].assert_is_well_formed(), True)
+        self.assertEqual(l[2].assert_is_well_formed(), True)
 
+"""
         #Test Dijkstra 
         n0 = node(0, 'a', {3: 1}, {1: 1, 2: 1})
         n1 = node(1, 'b', {0: 1}, {2: 2})
@@ -486,6 +489,7 @@ class InitTest(unittest.TestCase):
         a, b = g.Dijkstra(n0)
         print(a)
         print(b)
+"""
 
 
        
