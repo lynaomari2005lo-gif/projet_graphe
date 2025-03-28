@@ -366,20 +366,19 @@ class InitTest(unittest.TestCase):
         g_vide = open_digraph([],[],[] )
         self.assertEqual(g_vide.assert_is_well_formed(), True)
         g.iparallel(g_vide)
-        g.display("test_iparallel_elmntneutregrphvide.pdf")
+        #g.display("test_iparallel_elmntneutregrphvide.pdf")
         g.iparallel(g1)
         self.assertEqual(g.assert_is_well_formed(), True)
-        g.display("test_iparallel.pdf")
-        g1.display("test_iparallel_pasdemodif.pdf")
+        #g.display("test_iparallel.pdf")
+        #g1.display("test_iparallel_pasdemodif.pdf")
         t0 = node(0, "t0", {}, {1: 1})
         t1 = node(1, "t1", {0: 1}, {})
         gtest = open_digraph([0],[1],[t0, t1] )
         gpar = gtest.parallel(g, g1)
         self.assertEqual(gpar.assert_is_well_formed(), True)
-        gpar.display("test_parallel.pdf")
-        g.display("test_iparallel2.pdf")
-        g1.display("test_iparallel_pasdemodif2.pdf")
-        g_vide = open_digraph([],[],[] )
+        #gpar.display("test_parallel.pdf")
+        #g.display("test_iparallel2.pdf")
+        #g1.display("test_iparallel_pasdemodif2.pdf")
 
         #Test icompose et compose 
         n0 = node(0, 'a', {3: 1}, {1: 1, 2: 1})
@@ -389,6 +388,11 @@ class InitTest(unittest.TestCase):
         n4 = node(4, 'e', {2:1}, {})
         g = open_digraph([3],[4],[n0, n1, n2, n3, n4] )
         self.assertEqual(g.assert_is_well_formed(), True)
+        g_neutre = g.identity(1)
+        #g_neutre.display("grphidentity.pdf")
+        self.assertEqual(g_neutre.assert_is_well_formed(), True)
+        g.icompose(g_neutre)
+        #g.display("test_icompose_elmntneutregrphidentity.pdf")
         i0 = node(0, "i0", {3: 1}, {1: 1, 2: 1})
         i1 = node(1, "i1", {0: 1}, {2: 2})
         i2 = node(2, "i2", {0: 1, 1: 2}, {4: 1})
@@ -430,7 +434,6 @@ class InitTest(unittest.TestCase):
         #gtest.display("gtestsansmodif.pdf")
         #g.display("gsansmodif.pdf")
         #g1.display("g1sansmodif.pdf")
-
 
         # Test identity(n)
 
@@ -476,7 +479,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l[1].assert_is_well_formed(), True)
         self.assertEqual(l[2].assert_is_well_formed(), True)
 
-"""
+
         #Test Dijkstra 
         n0 = node(0, 'a', {3: 1}, {1: 1, 2: 1})
         n1 = node(1, 'b', {0: 1}, {2: 2})
@@ -486,10 +489,25 @@ class InitTest(unittest.TestCase):
         g = open_digraph([3],[4],[n0, n1, n2, n3, n4] )
         self.assertEqual(g.assert_is_well_formed(), True)
         print("test Dijkstra")
-        a, b = g.Dijkstra(n0)
-        print(a)
-        print(b)
-"""
+        print(g.Dijkstra(n0.get_id()))
+
+        #Test tri_topologique
+        n0 = node(1, "N0", {}, {3: 1})
+        n1 = node(1, "N1", {}, {5: 1, 4:1, 8:1})
+        n2 = node(2, "N2", {}, {4: 1})
+        n3 = node(3, "N3", {0: 1}, {7:1, 5:1, 6:1})
+        n4 = node(4, "N4", {1:1, 2:1}, {6:1})
+        n5 = node(5, "N5", {3:1, 1:1}, {7: 1})
+        n6 = node(6, "N6", {3: 1, 4:1}, {8:1, 9:1})
+        n7 = node(7, "N7", {3:1, 5:1}, {})
+        n8 = node(8, "N8", {1: 1, 6:1}, {})
+        n9 = node(9, "N9", {6: 1}, {})
+        g = open_digraph([0, 2], [7], [n1,n2,n3,n4,n5,n6,n7,n8,n9])
+        #self.assertEqual(g.assert_is_well_formed(), True)
+        #self.assertEqual(g.tri_topologique(), [[n0,n1,n2], [n3,n4], [n5,n6], [n7,n8,n9]])
+
+
+
 
 
        

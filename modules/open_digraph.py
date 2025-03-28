@@ -678,6 +678,38 @@ class open_digraph : # for open directed graph
             grp = open_digraph(p,e,liste_n)
             liste.append(grp)
         return liste
+    def Dijkstra(self, src, direction = None):
+        Q = [src] 
+        dist = {src:0}
+        prev={}
+        while Q != [] :
+            u = min(Q, key=lambda node: dist[node])
+            Q.remove(u)
+            if ( direction == None):
+                neighbours = list(self.get_node_by_id(u).get_children().keys()) + list(self.get_node_by_id(u).get_parents().keys())
+            elif ( direction == 1):
+                neighbours = list(self.get_node_by_id(u).get_children().keys())
+            elif ( direction == -1):
+                neighbours = list(self.get_node_by_id(u).get_parents().keys())
+            for v in neighbours :
+                if v not in dist :
+                    Q.append(v)
+                if v not in dist or dist.get(v) > dist[u] + 1:
+                    dist[v] = dist[u] + 1
+                    prev[v] = u
+        return dist, prev
+    def tri_topologique(self):
+        res = []
+        g = self.copy()
+        def find_cofeuilles(self):
+            return [node for node in self.get_nodes() if node.get_parents() == {}]
+        while len(g.nodes)>0:
+            co_feuilles = find_cofeuilles(g)
+            l = []
+            for feuille in co_feuilles:
+                l.append(feuille)
+                g.remove_node_by_id(feuille.get_id())
+            res.append(l)
 
 def inout(liste):
     inputs = []
