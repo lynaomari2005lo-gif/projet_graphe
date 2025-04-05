@@ -766,6 +766,21 @@ class open_digraph : # for open directed graph
                 l.append(feuille)
                 g.remove_node_by_id(feuille.get_id())
             res.append(l)
+    def fusion_noeuds(self, id1, id2, label=None):
+        node1 = self.get_node_by_id(id1)
+        node2 = self.get_node_by_id(id2)
+        nv_label = ""
+        if label == None:
+            nv_label = node1.get_label()
+        else:
+            nv_label = label
+        for parent_id, mult in node2.get_parents().items():
+            self.add_edges(parent_id, id1, mult)
+        for child_id, mult in node2.get_children().items():
+            self.add_edges(id1, child_id, mult)
+        self.remove_node_by_id(id2)
+        self.get_node_by_id(id1).set_label(nv_label)
+
 
 def inout(liste):
     inputs = []
@@ -940,5 +955,27 @@ class bool_circ(open_digraph):
                 if indeg < 2 or outdeg != 1:
                     return False 
         return True
+    @classmethod
+    def parse_parentheses(cls,s):
+        g = open_digraph.identity(1)
+        current_node = 0
+        s2 = ''
+        for c in s:
+            if c == '(' :
+                node = g.get_node_by_id(current_node)
+                node.set_label(node.get_label() + s2)
+                g.add_node(children = {current_node:1})
+                current_node = g.max_id() + 1
+                s2 = ''
+            elif c == ')':
+                node = g.get_node_by_id(current_node)
+                node.set_label(node.get_label() + s2)
+                cn = g.get_node_by_id(current_node)
+                current_node = list(cn.get_children().keys())[0]
+                s2 = ''
+            else:
+                s2 += c 
+        return g
+
  
 

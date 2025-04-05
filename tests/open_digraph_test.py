@@ -524,8 +524,10 @@ class InitTest(unittest.TestCase):
         g = open_digraph([0, 2], [7], [n1,n2,n3,n4,n5,n6,n7,n8,n9])
         #self.assertEqual(g.assert_is_well_formed(), True)
         #self.assertEqual(g.tri_topologique(), [[n0,n1,n2], [n3,n4], [n5,n6], [n7,n8,n9]])
-
-
+        
+        # Test bool
+        #h = bool_circ.parse_parentheses("((x0)&((x1)&(x2)))|((x1)&(~(x2)))")
+        #print(h)
 
 
 
