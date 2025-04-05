@@ -698,6 +698,62 @@ class open_digraph : # for open directed graph
                     dist[v] = dist[u] + 1
                     prev[v] = u
         return dist, prev
+    def Dijkstra2(self, src, direction=None, tgt=None):
+        Q = [src] 
+        dist = {src: 0}
+        prev = {}
+        while Q != []:
+            u = min(Q, key=lambda node: dist[node])
+            Q.remove(u)
+
+            if tgt is not None and u == tgt:
+                break
+
+            if direction is None:
+                neighbours = list(self.get_node_by_id(u).get_children().keys()) + list(self.get_node_by_id(u).get_parents().keys())
+            elif direction == 1:
+                neighbours = list(self.get_node_by_id(u).get_children().keys())
+            elif direction == -1:
+                neighbours = list(self.get_node_by_id(u).get_parents().keys())
+
+            for v in neighbours:
+                if v not in dist:
+                    Q.append(v)
+                if v not in dist or dist[v] > dist[u] + 1:
+                    dist[v] = dist[u] + 1
+                    prev[v] = u
+
+        return dist, prev
+    def shortest_path(self, u, v):
+        dist, prev = self.Dijkstra2(u, tgt=v)
+        if v not in dist:
+            return []
+
+        chemin = []
+        cn = v
+        while cn != u:
+            chemin.append(cn)
+            cn = prev.get(cn)
+            if cn is None:
+                return [] 
+        chemin.append(u)
+        chemin.reverse()
+        return chemin
+    def ancetres(self, u, v):
+        distu , prev1 = self.Dijkstra2(u, direction=-1)
+        distv , prev2 = self.Dijkstra2(v, direction=-1)
+        ancetre_com = [] 
+        for node in distu:
+            if node in distv:
+                ancetre_com.append(node)
+        dico = {}
+        for a in ancetre_com:
+            dico[a] = (distu[a], distv[a])
+
+        return dico
+
+
+
     def tri_topologique(self):
         res = []
         g = self.copy()

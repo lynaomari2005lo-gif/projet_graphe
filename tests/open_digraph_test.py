@@ -480,16 +480,35 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l[2].assert_is_well_formed(), True)
 
 
-        #Test Dijkstra 
+        #Test Dijkstra Djikstra 2 et shortest_path
         n0 = node(0, 'a', {3: 1}, {1: 1, 2: 1})
         n1 = node(1, 'b', {0: 1}, {2: 2})
         n2 = node(2, 'c', {0: 1, 1: 2}, {4: 1})
         n3 = node(3, 'd', {}, {0: 1})
         n4 = node(4, 'e', {2:1}, {})
-        g = open_digraph([3],[4],[n0, n1, n2, n3, n4] )
+        n5 = node(5, 'f', {}, {})
+        g = open_digraph([3],[4],[n0, n1, n2, n3, n4, n5] )
         self.assertEqual(g.assert_is_well_formed(), True)
         print("test Dijkstra")
         print(g.Dijkstra(n0.get_id()))
+        print(g.Dijkstra2(n0.get_id(), tgt = n1.get_id()))
+        print(g.shortest_path(n0.get_id(),n5.get_id()))
+
+        # Test ancetres
+        n0 = node(0, 'a', {}, {3: 1})
+        n1 = node(1, 'b', {}, {5:1, 8:1, 4:1})
+        n2 = node(2, 'c', {}, {4: 1})
+        n3 = node(3, 'd', {0:1}, {7:1,5:1,6:1})
+        n4 = node(4, 'e', {2:1,1:1}, {6:1})
+        n5 = node(5, 'f', {3:1,1:1}, {7:1})
+        n6 = node(6, 'g', {4:1,3:1}, {8:1,9:1})
+        n7 = node(7, 'h', {3:1,5:1}, {})
+        n8 = node(8, 'ei', {6:1,1:1}, {})
+        n9 = node(9, 'j', {6:1}, {})
+        g = open_digraph([],[],[n0, n1, n2, n3, n4, n5,n6,n7,n8,n9] )
+        self.assertEqual(g.assert_is_well_formed(), True)
+        print("test Ancetres\n")
+        print(g.ancetres(5,8))
 
         #Test tri_topologique
         n0 = node(1, "N0", {}, {3: 1})
