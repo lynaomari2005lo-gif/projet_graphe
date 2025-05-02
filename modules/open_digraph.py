@@ -781,6 +781,8 @@ class open_digraph : # for open directed graph
         self.remove_node_by_id(id2)
         self.get_node_by_id(id1).set_label(nv_label)
 
+    
+
 
 def inout(liste):
     inputs = []
@@ -976,6 +978,80 @@ class bool_circ(open_digraph):
             else:
                 s2 += c 
         return g
+    def genere_bool_circ(self, n):
+        """
+        n: taille du graphe
+        """
+
+        g = open_digraph([],[],[])
+        g = g.random(n,1, DAG = True)
+        noeuds = g.get_nodes()
+        for n in noeuds:
+            if n.get_parents() == [] :
+                g.add_input_node(n.get_id())
+            if n.get_children() == [] :
+                g.add_output_node(n.get_id())
+        noeuds = g.get_nodes()
+        for n in noeuds:
+            indeg = n.indegree()
+            outdeg = n.outdegree()
+            if indeg == outdeg == 1 :
+                n.set_label("~")
+            if indeg == 1 and  outdeg > 1 :
+                n.set_label("")
+            if indeg > 1 and outdeg == 1 :
+                a = random.choice(["&", "|", "^"])
+                n.set_label(a)
+            if indeg > 1 and  outdeg > 1 :
+                n.set_label("")
+        return g #a changer chez moi 
+
+    def half_adder(self, a, b):
+        g = open_digraph.empty()
+        xor = g.add_node('^', {a: 1, b: 1})
+        and_ = g.add_node('&', {a: 1, b: 1})
+        return xor, and_
+
+    def build_half_addern(self, n):
+        g = open_digraph.empty()
+        a_inputs = [g.add_node(label='') for _ in range(n)]
+        b_inputs = [g.add_node(label='') for _ in range(n)]
+        sum_outputs = []
+
+        for i in range(n):
+        xor, carry = self.half_adder(a_inputs[i], b_inputs[i])
+        sum_outputs.append(xor)
+
+        carry_out = carry  # Le dernier carry
+        g.set_inputs(a_inputs + b_inputs)
+        g.set_outputs(sum_outputs + [carry_out])
+        return bool_circ(g)
+
+    def build_addern(self, n):
+        g = open_digraph.empty()
+        a_inputs = [g.add_node(label='') for _ in range(n)]
+        b_inputs = [g.add_node(label='') for _ in range(n)]
+        c_in = g.add_node(label='')  # retenue initiale à 0
+        
+        sum_outputs = []
+        for i in range(n):
+            ax = a_inputs[i]
+            bx = b_inputs[i]
+            
+            xor1 = g.add_node('^', {ax: 1, bx: 1})
+            sum_node = g.add_node('^', {xor1: 1, c_in: 1})
+            
+            and1 = g.add_node('&', {ax: 1, bx: 1})
+            and2 = g.add_node('&', {xor1: 1, c_in: 1})
+            or_ = g.add_node('|', {and1: 1, and2: 1})
+            
+            sum_outputs.append(sum_node)
+            c_in = or_  
+        
+        g.set_inputs(a_inputs + b_inputs + [a_inputs[0]])  
+        g.set_outputs(sum_outputs + [c_in])
+        return bool_circ(g)
+        #mettre commentaires et tester
 
  
 
