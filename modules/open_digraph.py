@@ -981,30 +981,168 @@ class bool_circ(open_digraph):
     def genere_bool_circ(self, n):
         """
         n: taille du graphe
+        Retourne un open_digraph représentant un circuit booléen.
         """
+        g = open_digraph([], [], [])
+        g = g.random(n, 1, DAG=True)
 
-        g = open_digraph([],[],[])
-        g = g.random(n,1, DAG = True)
-        noeuds = g.get_nodes()
-        for n in noeuds:
-            if n.get_parents() == [] :
-                g.add_input_node(n.get_id())
-            if n.get_children() == [] :
-                g.add_output_node(n.get_id())
-        noeuds = g.get_nodes()
-        for n in noeuds:
+        # Attribuer les entrées et sorties
+        for node in g.get_nodes():
+            if node.indegree() == 0:
+                g.add_input_id(node.get_id())
+            if node.outdegree() == 0:
+                g.add_output_id(node.get_id())
+
+        # On parcourt une copie car on peut modifier le graphe pendant l’itération
+        for n in g.get_nodes()[:]:  # [:] pour éviter modification pendant itération
             indeg = n.indegree()
             outdeg = n.outdegree()
-            if indeg == outdeg == 1 :
-                n.set_label("~")
-            if indeg == 1 and  outdeg > 1 :
-                n.set_label("")
-            if indeg > 1 and outdeg == 1 :
-                a = random.choice(["&", "|", "^"])
+
+            if indeg == outdeg == 1:
+                n.set_label("~")  # NON logique
+            elif indeg == 1 and outdeg > 1:
+                n.set_label("")  # Juste un duplicateur ?
+            elif indeg > 1 and outdeg == 1:
+                a = rd.choice(["&", "|", "^"])
                 n.set_label(a)
-            if indeg > 1 and  outdeg > 1 :
+            elif indeg > 1 and outdeg > 1:
+                u_id = n.get_id()
+                parents = n.get_parents()
+                children = n.get_children()
+
+                # Création des nouveaux nœuds
+                u_op_id = g.new_id()
+                u_cp_id = g.new_id()
+                a = rd.choice(["&", "|", "^"])
+
+                u_op = node(u_op_id, a, parents.copy(), {u_cp_id: 1})
+                u_cp = node(u_cp_id, '', {u_op_id: 1}, children.copy())
+
+                # Ajout au graphe
+                g.nodes[u_op_id] = u_op
+                g.nodes[u_cp_id] = u_cp
+
+                # Redirection des parents
+                for p_id in parents:
+                    p = g.get_node_by_id(p_id)
+                    p.remove_child_id(u_id)
+                    p.add_child_id(u_op_id)
+
+                # Redirection des enfants
+                for c_id in children:
+                    c = g.get_node_by_id(c_id)
+                    c.remove_parent_id(u_id)
+                    c.add_parent_id(u_cp_id)
+
+                # Mise à jour entrées/sorties si besoin
+                if u_id in g.get_input_ids():
+                    g.inputs.remove(u_id)
+                    g.inputs.append(u_op_id)
+                if u_id in g.get_output_ids():
+                    g.outputs.remove(u_id)
+                    g.outputs.append(u_cp_id)
+
+                g.nodes.pop(u_id)  # Supprimer l'ancien nœud
+
+        return g
+    def genere_bool_circ(self, n, nb_inputs=1, nb_outputs=1):
+        """
+        n: taille du graphe
+        nb_inputs, nb_outputs : nombres souhaités d'entrées et de sorties
+        Retourne un graphe booléen avec ces contraintes.
+        """
+        g = open_digraph([], [], [])
+        g = g.random(n, 1, DAG=True)
+
+        for n in g.get_nodes():
+            if n.indegree() == 0:
+                g.add_input_id(n.get_id())
+            if n.outdegree() == 0:
+                g.add_output_id(n.get_id())
+
+        # Étape 2bis : ajustement du nombre d'inputs
+        while len(g.inputs) < nb_inputs:
+            target = rd.choice(g.get_node_ids())
+            new_id = g.new_id()
+            input_n = node(new_id, "", {}, {target: 1})
+            g.nodes[new_id] = input_n
+            g.get_node_by_id(target).add_parent_id(new_id)
+            g.inputs.append(new_id)
+
+        while len(g.inputs) > nb_inputs and len(g.inputs) >= 2:
+            i1 = g.inputs.pop()
+            i2 = g.inputs.pop()
+            new_id = g.new_id()
+            duplicateur = node(new_id, "", {}, {i1: 1, i2: 1})
+            g.nodes[new_id] = duplicateur
+            g.get_node_by_id(i1).add_parent_id(new_id)
+            g.get_node_by_id(i2).add_parent_id(new_id)
+            g.inputs.append(new_id)
+
+        # Ajustement du nombre d'outputs
+        while len(g.outputs) < nb_outputs:
+            source = rd.choice(g.get_node_ids())
+            new_id = g.new_id()
+            output_n = node(new_id, "", {source: 1}, {})
+            g.nodes[new_id] = output_n
+            g.get_node_by_id(source).add_child_id(new_id)
+            g.outputs.append(new_id)
+
+        while len(g.outputs) > nb_outputs and len(g.outputs) >= 2:
+            o1 = g.outputs.pop()
+            o2 = g.outputs.pop()
+            new_id = g.new_id()
+            duplicateur = node(new_id, "", {o1: 1, o2: 1}, {})
+            g.nodes[new_id] = duplicateur
+            g.get_node_by_id(o1).add_child_id(new_id)
+            g.get_node_by_id(o2).add_child_id(new_id)
+            g.outputs.append(new_id)
+
+        for n in g.get_nodes()[:]:
+            indeg = n.indegree()
+            outdeg = n.outdegree()
+
+            if indeg == outdeg == 1:
+                n.set_label("~")
+            elif indeg == 1 and outdeg > 1:
                 n.set_label("")
-        return g #a changer chez moi 
+            elif indeg > 1 and outdeg == 1:
+                n.set_label(rd.choice(["&", "|", "^"]))
+            elif indeg > 1 and outdeg > 1:
+                u_id = n.get_id()
+                parents = n.get_parents()
+                children = n.get_children()
+
+                u_op_id = g.new_id()
+                u_cp_id = g.new_id()
+                a = rd.choice(["&", "|", "^"])
+
+                u_op = node(u_op_id, a, parents.copy(), {u_cp_id: 1})
+                u_cp = node(u_cp_id, '', {u_op_id: 1}, children.copy())
+
+                g.nodes[u_op_id] = u_op
+                g.nodes[u_cp_id] = u_cp
+
+                for p_id in parents:
+                    p = g.get_node_by_id(p_id)
+                    p.remove_child_id(u_id)
+                    p.add_child_id(u_op_id)
+
+                for c_id in children:
+                    c = g.get_node_by_id(c_id)
+                    c.remove_parent_id(u_id)
+                    c.add_parent_id(u_cp_id)
+
+                if u_id in g.get_input_ids():
+                    g.inputs.remove(u_id)
+                    g.inputs.append(u_op_id)
+                if u_id in g.get_output_ids():
+                    g.outputs.remove(u_id)
+                    g.outputs.append(u_cp_id)
+
+                g.nodes.pop(u_id)
+
+        return g
 
     def half_adder(self, a, b):
         g = open_digraph.empty()
@@ -1051,7 +1189,7 @@ class bool_circ(open_digraph):
         g.set_inputs(a_inputs + b_inputs + [a_inputs[0]])  
         g.set_outputs(sum_outputs + [c_in])
         return bool_circ(g)
-        #mettre commentaires et tester
+        #mettre commentaires et tester 
 
  
 
