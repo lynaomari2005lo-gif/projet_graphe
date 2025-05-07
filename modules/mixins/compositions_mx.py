@@ -1,25 +1,3 @@
-
-Conversación abierta. 1 mensaje sin leer.
-
-Ir al contenido
-Uso de Gmail con lectores de pantalla
-1 de 2.365
-Fwd:
-Recibidos
-Lynaomari2005lo Lynaomari2005lo
-	
-13:31 (hace 5 minutos)
-	
-para mí
-
-
----------- Forwarded message ---------
-De : Moé C.A <moe2005ca@gmail.com>
-Date: mer. 7 mai 2025 à 13:29
-Subject:
-To: Lynaomari2005lo Lynaomari2005lo <Lynaomari2005lo@gmail.com>
-
-
 # mixins/compositions_mx.py
 
 class OpenDigraphCompositionsMixin:
