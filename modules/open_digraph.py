@@ -1,124 +1,6 @@
 from random import *
-from mixins.compositions_mx import OpenDigraphCompositionsMixin
-
-class node:
-    def __init__(self, identity, label, parents, children):
-        """
-        identity : int; its unique id in the graph
-        label : string;
-        parents : int->int dict; maps a parent node's id to its multiplicity
-        children : int->int dict; maps a child node's id to its multiplicity
-        """
-        self.id = identity
-        self.label = label
-        self.parents = parents
-        self.children = children
-    def __str__(self):
-        parents_s = ""
-        children_s = ""
-        for p in self.parents:
-             parents_s += "id du parent :" + str(p) +" ,nombre de liens : " + str(self.parents[p]) + "\n"
-        for c in self.children:
-             children_s += "id de l'enfant :" + str(c) +" ,nombre de liens : " + str(self.children[c]) + "\n"
-        chaine = "id : " + str(self.id) + "\n" + "label : " + self.label + "\n" + "parents : \n" + parents_s + "enfants : \n" + children_s + "\n"
-        return chaine
-    def __repr__(self):
-        return str(self)
-    def copy(self):
-        """
-        renvoie une copie du node 
-        """
-        return node(int(self.id),str(self.label),dict(self.parents), dict(self.children))
-    def get_id(self):
-        return self.id
-    def get_label(self):
-        return self.label
-    def get_parents(self):
-        return self.parents
-    def get_children(self):
-        return self.children
-    def get_idc(self):
-        return [n for n in self.children]
-    def get_idp(self):
-        return [n for n in self.parents]
-    def set_id(self,id1):
-        self.id = id1
-    def set_label(self,lab):
-        self.label = lab
-    def set_parents(self,p):
-        self.parents = p 
-    def set_children(self,c):
-        self.children = c 
-    def add_child_id(self,n):
-        if(n in self.children):
-            self.children[n] += 1
-        else:
-            self.children[n] = 1
-    def add_parent_id(self,n):
-        if(n in self.parents):
-            self.parents[n] += 1
-        else:
-            self.parents[n] = 1
-    def remove_parent_once(self, id):
-        """
-        id : int; id du noeud
-        retire une occurence de l'id donné en paramètre
-        """ 
-        if id in self.parents :
-            self.parents[id]-= 1
-        if self.parents[id] == 0 :
-            self.parents.pop(id)
-     
-    def remove_child_once(self, id):
-        """
-        id : int; id du noeud
-        retire une occurence de l'id donné en paramètre
-        """ 
-        if self.children[id] == 0 :
-            self.children.pop(id)
-        if id in self.children :
-            self.children[id]-= 1
-    def remove_parent_id(self, id):
-        """
-        id : int; id du noeud
-        retire toutes les occurences de l'id donné en paramètre
-
-        """ 
-        if id in self.parents :
-            self.parents.pop(id)
-     
-    def remove_child_id(self, id):
-        """
-        id : int; id du noeud
-        retire toutes les occurences de l'id donné en paramètre
-
-        """ 
-        if id in self.children :
-            self.children.pop(id)
-    def indegree(self):
-        """
-        renvoie le degré entrant (nombre d'arêtes qui arrivent vers ce noeud)
-        """
-        s = 0
-        for p in self.parents:
-            s += self.parents[p]
-        return s
-
-    def outdegree(self):
-        """
-        renvoie le degré sortant (nombre d'arêtes qui partent de ce noeud)
-        """
-        s = 0
-        for c in self.children:
-            s += self.children[c]
-        return s
-
-    def degree(self):
-        """
-        renvoie le degré total (somme du degré entrant et du degré sortant)
-        """
-        return self.indegree() + self.outdegree()
-
+from modules.mixins.compositions_mx import OpenDigraphCompositionsMixin
+from modules.nodes import node
 
 class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
     def __init__(self, inputs, outputs, nodes):
@@ -694,20 +576,27 @@ Sous-classe Circuit
 """
 
 class bool_circ(open_digraph):
-    def __init__(self, graph): 
-        super().__init__(graph.get_input_ids(), graph.get_output_ids(), graph.get_nodes())
-        if not isinstance(graph, open_digraph):  
-            raise TypeError("L'argument doit être une instance de open_digraph") 
-        self.graph = graph
-        if not self.is_well_formed_cyclic():
+    def __init__(self, graph_or_in, out=None, nodes=None, *, skip_check=False):
+        if isinstance(graph_or_in, open_digraph):
+            g = graph_or_in
+            super().__init__(g.get_input_ids(), g.get_output_ids(), g.get_nodes())
+        else:
+            # Permet l'appel depuis copy() ou une construction directe
+            super().__init__(graph_or_in or [], out or [], nodes or [])
+
+        # Validation structurelle (si non désactivée)
+        if not skip_check and not self.is_well_formed_cyclic():
             raise ValueError("Le circuit booléen n'est pas bien formé.")
+
     def is_well_formed_cyclic(self):
         """
-        teste si le circuit booléen est bien un circuit booléen(doit être acyclique et respecter les contraintes de degré)
+        Vérifie que le circuit est bien formé :
+        - acyclique
+        - contraintes sur le degré et le label respectées
         """
         if self.is_cyclic():
             return False
-        if not self.graph.assert_is_well_formed():
+        if not self.assert_is_well_formed():
             return False
         for node in self.get_nodes():
             label = node.get_label()
@@ -715,17 +604,24 @@ class bool_circ(open_digraph):
             outdeg = node.outdegree()
             if label == '':
                 if indeg != 1:
-                    return False  
-            elif label == '&' or label == '|': 
-                if outdeg != 1:
-                    return False  
-            elif label == '~': 
-                if indeg != 1 or outdeg != 1:
-                    return False 
-            elif label == '^': 
+                    return False
+            elif label in ['&', '|']:
                 if indeg < 2 or outdeg != 1:
-                    return False 
+                    return False
+            elif label == '~':
+                if indeg != 1 or outdeg != 1:
+                    return False
+            elif label == '^':
+                if indeg < 2 or outdeg != 1:
+                    return False
+            elif label in ['0', '1']:
+                if indeg != 0:
+                    return False
+            else:
+                # Variable d’entrée : pas de contrainte stricte
+                pass
         return True
+
     @classmethod
     def parse_parentheses(cls,s):
         g = open_digraph.identity(1)
@@ -960,5 +856,228 @@ class bool_circ(open_digraph):
         return bool_circ(g)
         #mettre commentaires et tester 
 
- 
 
+"""
+
+Sous-classe Circuit
+
+"""
+
+class bool_circ(open_digraph):
+    def __init__(self, graph_or_in, out=None, nodes=None, *, skip_check=False):
+        if isinstance(graph_or_in, open_digraph):
+            g = graph_or_in
+            super().__init__(g.get_input_ids(), g.get_output_ids(), g.get_nodes())
+        else:
+            super().__init__(graph_or_in or [], out or [], nodes or [])
+
+        if not skip_check and not self.is_well_formed_cyclic():
+            raise ValueError("Le circuit booléen n'est pas bien formé.")
+    def is_well_formed_cyclic(self):
+        """
+        teste si le circuit booléen est bien un circuit booléen(doit être acyclique et respecter les contraintes de degré)
+        """
+        if self.is_cyclic():
+            return  False
+        if not self.assert_is_well_formed():
+            return  False
+        for node in self.get_nodes():
+            label = node.get_label()
+            indeg = node.indegree()
+            outdeg = node.outdegree()  
+            if label == '0' or label == '1':
+                if indeg != 0: 
+                    return  False
+            elif label == '':
+                if indeg not in [0,1]:
+                    return False
+            elif label == '&' or label == '|':
+                if indeg < 2 or outdeg != 1:
+                    return 5
+            elif label == '~':
+                if indeg != 1 or outdeg != 1:
+                    return False
+            elif label == '^':
+                if indeg < 2 or outdeg != 1:
+                    return False
+            elif label not in ['','0','1','&','|','^','~']:
+                return False
+        return True
+    @classmethod
+    def int_bin(cls, n, t):
+        """
+        Crée un circuit booléen représentant l'entier `n` sur `t` bits.
+        Chaque bit est un nœud avec pour label '0' ou '1', sans parent ni enfant.
+        L'ID 0 correspond au bit de poids faible (le moins significatif).
+        """
+        nbin = bin(n)[2:].zfill(t)  
+        inputs = []
+        nodes = []
+
+        for i in range(t):
+            bit = nbin[i]  
+            new_node = node(i, bit, {}, {})  
+            inputs.append(i)
+            nodes.append(new_node)
+
+        return bool_circ(open_digraph([], [], nodes))
+    @classmethod
+    def parse_parentheses(cls, *args):
+        """
+        Construit un bool_circ à partir d'une ou plusieurs chaîne de caractères bien parenthésée.
+        """
+        root = node(0, '', {}, {})  
+        nodes = {0: root}
+        current_id = 0
+        next_id = 1
+        s2 = ''
+        s3 = ''
+        val = []
+        stack = []
+        
+        for s in args:
+            for char in s:
+                if char == '(':
+                    if s2.strip():
+                        nodes[current_id].set_label(s2.strip())
+                    parent = node(next_id, '', {}, {current_id: 1})
+                    nodes[current_id].add_parent_id(next_id)
+                    nodes[next_id] = parent
+                    stack.append(current_id)
+                    current_id = next_id
+                    next_id += 1
+                    s2 = ''
+                elif char == ')':
+                    if s2.strip():
+                        nodes[current_id].set_label(s2.strip())
+                    if stack:
+                        current_id = stack.pop()
+                    s2 = ''
+                    if s3.strip() not in val and s3.strip() != '':
+                        val.append(s3.strip())
+                    s3 = ''
+                else:
+                    s2 += char
+                    if char not in ["|", "^", "~", "&"]:
+                        s3 += char
+                
+        graph = open_digraph([], [], list(nodes.values()))
+        
+        id_val = {}
+        input_ids = []
+        for x in val:
+            ids = [id1 for id1, nd in graph.nodes.items() if nd.get_label() == x]
+            if ids:
+                main_id = ids[0]
+                for other_id in ids[1:]:
+                    graph.fusion_noeuds(main_id, other_id)
+                graph.nodes[main_id].set_label('')
+                input_ids.append(main_id)
+        
+        graph.remove_node_by_id(0)
+        return cls(graph), val
+    def rewrite_once(self):
+        """
+        Applique une seule fois toutes les règles de réécriture possibles (dans un ordre arbitraire).
+        Retourne True si au moins une réécriture a été effectuée, False sinon.
+        """
+        changed = False
+        for node in self.get_nodes():
+            if node.get_label() == '~':
+                # Involution du NON (~ ~ x -> x)
+                children = node.get_children_ids()
+                if len(children) == 1:
+                    child = self.get_node_by_id(children[0])
+                    if child.get_label() == '~':
+                        grandchild = child.get_children_ids()[0]
+                        self.fusion_noeuds(node.get_id(), grandchild)
+                        changed = True
+            if node.get_label() == '^':
+                # Involution de XOR (x^x -> 0)
+                children = node.get_children_ids()
+                if len(children) == 2 and children[0] == children[1]:
+                    node.set_label('0')
+                    node.set_children_ids({})
+                    changed = True
+        return changed
+    def rewrite_all(self):
+        """
+        Applique les règles de réécriture tant qu'elles sont possibles.
+        """
+        while self.rewrite_once():
+            pass
+    def evaluate(self, input_values: dict[int, int]) -> dict[int, int]:
+        """
+        Évalue le circuit booléen à partir d'un dictionnaire {input_id: value}.
+        Retourne un dictionnaire {output_id: value}.
+        """
+        values = {}  # {node_id: value}
+        queue = []   # pour topological sorting (naïf)
+
+        # Initialisation des valeurs d'entrée
+        for node in self.get_nodes():
+            if node.get_id() in input_values:
+                values[node.get_id()] = input_values[node.get_id()]
+                queue.append(node.get_id())
+            elif node.get_label() == '0':
+                values[node.get_id()] = 0
+                queue.append(node.get_id())
+            elif node.get_label() == '1':
+                values[node.get_id()] = 1
+                queue.append(node.get_id())
+
+        # Tant que tous les nœuds n'ont pas été évalués
+        while len(values) < len(self.get_nodes()):
+            for node in self.get_nodes():
+                nid = node.get_id()
+                if nid in values:
+                    continue
+                parent_ids = node.get_parent_ids()
+                if all(pid in values for pid in parent_ids):
+                    parent_vals = [values[pid] for pid in parent_ids]
+                    label = node.get_label()
+                    if label == '&':
+                        values[nid] = int(all(parent_vals))
+                    elif label == '|':
+                        values[nid] = int(any(parent_vals))
+                    elif label == '^':
+                        values[nid] = sum(parent_vals) % 2
+                    elif label == '~':
+                        values[nid] = 1 - parent_vals[0]
+                    else:
+                        # Copie ou variable nommée : propage la valeur du parent
+                        values[nid] = parent_vals[0] if parent_vals else 0
+
+        # Récupération des valeurs de sortie
+        return {oid: values[oid] for oid in self.get_output_ids()}
+    @classmethod
+    def random_expr(cls, depth=3, variables=None):
+        """
+        Génère un circuit booléen aléatoire récursivement.
+        """
+        import random
+        if variables is None:
+            variables = ['x', 'y', 'z', 'w']
+        ops = ['&', '|', '^']
+        if depth == 0:
+            return random.choice(variables + ['0', '1'])
+        op = random.choice(ops + ['~'])
+        if op == '~':
+            return f'~({cls.random_expr(depth - 1, variables)})'
+        else:
+            return f'({cls.random_expr(depth - 1, variables)}{op}{cls.random_expr(depth - 1, variables)})'
+
+def simplification_stats(n=100, depth=3):
+    total_before = 0
+    total_after = 0
+    for _ in range(n):
+        expr = bool_circ.random_expr(depth)
+        circ, _ = bool_circ.parse_parentheses(expr)
+        before = len(circ.get_nodes())
+        circ.rewrite_all()
+        after = len(circ.get_nodes())
+        total_before += before
+        total_after += after
+    print(f"Total nœuds avant simplification : {total_before}")
+    print(f"Total nœuds après simplification : {total_after}")
+    print(f"Ratio moyen supprimé : {(total_before - total_after) / total_before:.2%}")

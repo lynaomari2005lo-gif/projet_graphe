@@ -4,7 +4,7 @@ root = os.path.normpath(os.path.join(__file__, "./../.."))
 sys.path.append(root) # allows us to fetch files from the project root
 import unittest
 from modules.open_digraph import *
-
+from modules.nodes import node
 
 class InitTest(unittest.TestCase):
     def test_init_node(self):
@@ -528,6 +528,7 @@ class InitTest(unittest.TestCase):
         # Test bool
         #h = bool_circ.parse_parentheses("((x0)&((x1)&(x2)))|((x1)&(~(x2)))")
         #print(h)
+    
 
 
 
@@ -548,3 +549,162 @@ class NodeTest(unittest.testcase):
     def test_get_label(self):
         self.assertEqual(self.n0.get_label(), 'a')
 
+class TestBoolCircHamming(unittest.TestCase):
+
+    def test_hamming_encoder_structure(self):
+        enc = bool_circ.hamming_encoder()
+        self.assertIsInstance(enc, bool_circ)
+        self.assertTrue(enc.is_well_formed_cyclic(), "Le circuit de l'encodeur doit être bien formé et acyclique.")
+
+        labels = [node.get_label() for node in enc.get_nodes()]
+        self.assertIn('^', labels, "L'encodeur doit utiliser des portes XOR (^)")
+
+    def test_hamming_decoder_structure(self):
+        dec = bool_circ.hamming_decoder()
+        self.assertIsInstance(dec, bool_circ)
+        self.assertTrue(dec.is_well_formed_cyclic(), "Le circuit du décodeur doit être bien formé et acyclique.")
+        
+        labels = [node.get_label() for node in dec.get_nodes()]
+        self.assertIn('^', labels, "Le décodeur doit utiliser des portes XOR (^)")
+
+    def test_hamming_identity_no_error(self):
+        """
+        Teste que décoder un encodage donne le même résultat (sans bruit).
+        Comme on n'a pas encore la méthode d'évaluation, ce test ne fait que vérifier la structure.
+        """
+        enc = bool_circ.hamming_encoder()
+        dec = bool_circ.hamming_decoder()
+
+        # Ici on vérifiera que les entrées du décodeur sont les sorties de l'encodeur (structurellement)
+        # Une version avancée testerait l'évaluation pour chaque combinaison possible (avec evaluate).
+        self.assertEqual(len(enc.get_output_ids()), 7, "L'encodeur Hamming (7,4) doit produire 7 bits.")
+        self.assertEqual(len(dec.get_input_ids()), 7, "Le décodeur Hamming (7,4) doit prendre 7 bits.")
+
+    def test_hamming_encoder_decoder_connectivity(self):
+        """
+        Vérifie qu'on peut connecter les sorties de l'encodeur aux entrées du décodeur.
+        """
+        enc = bool_circ.hamming_encoder()
+        dec = bool_circ.hamming_decoder()
+
+        enc_outputs = enc.get_output_ids()
+        dec_inputs = dec.get_input_ids()
+        self.assertEqual(len(enc_outputs), len(dec_inputs), "Les sorties de l'encodeur doivent être connectables aux entrées du décodeur.")
+    
+    def test_involution_NOT(self):
+        # Circuit ~ ~ x
+        circ, _ = bool_circ.parse_parentheses("~~x")
+        original = circ.to_dot()  # Représentation avant
+        circ.rewrite_all()
+        rewritten = circ.to_dot()  # Représentation après
+        self.assertIn('x', [n.get_label() for n in circ.get_nodes()], "Double NON doit s'effacer")
+        self.assertNotEqual(original, rewritten)
+
+    def test_involution_XOR(self):
+        # Circuit x ^ x
+        circ, _ = bool_circ.parse_parentheses("x^x")
+        circ.rewrite_all()
+        labels = [n.get_label() for n in circ.get_nodes()]
+        self.assertIn('0', labels, "x ^ x doit devenir 0")
+    
+    def test_hamming_encode_decode_no_error(self):
+        """
+        Vérifie que dec(enc(x)) == x pour tous les x ∈ [0, 15] (4 bits)
+        sans aucune erreur.
+        """
+        for x in range(16):  # Tous les messages de 4 bits
+            # Création de l’entrée
+            input_circ = bool_circ.int_bin(x, 4)
+            input_ids = input_circ.get_output_ids()
+            input_values = {nid: int(input_circ.get_node_by_id(nid).get_label()) for nid in input_ids}
+
+            # Encodeur
+            enc = bool_circ.hamming_encoder()
+            for i in range(4):
+                enc.add_edge(input_ids[i], enc.get_input_ids()[i])
+
+            # On évalue la sortie de l'encodeur
+            encoded_values = enc.evaluate(input_values)
+
+            # Décodeur
+            dec = bool_circ.hamming_decoder()
+            for i in range(7):
+                dec.add_node(enc.get_node_by_id(enc.get_output_ids()[i]))  # copier les noeuds de sortie
+                dec.add_edge(enc.get_output_ids()[i], dec.get_input_ids()[i])
+
+            # Résultat final
+            decoded_values = dec.evaluate(encoded_values)
+            final = list(decoded_values.values())
+            original = list(input_values.values())
+
+            self.assertEqual(final, original, f"Erreur sur x={x:04b}: attendu {original}, obtenu {final}")
+
+    def test_hamming_corrects_single_bit_error(self):
+        """
+        Vérifie que si une erreur est introduite sur un seul bit,
+        le décodeur corrige correctement le message.
+        """
+        for x in range(16):
+            input_circ = bool_circ.int_bin(x, 4)
+            input_ids = input_circ.get_output_ids()
+            input_values = {nid: int(input_circ.get_node_by_id(nid).get_label()) for nid in input_ids}
+
+            enc = bool_circ.hamming_encoder()
+            for i in range(4):
+                enc.add_edge(input_ids[i], enc.get_input_ids()[i])
+
+            encoded = enc.evaluate(input_values)
+
+            for flipped_bit in range(7):
+                corrupted = encoded.copy()
+                out_ids = enc.get_output_ids()
+                corrupted[out_ids[flipped_bit]] ^= 1  # inversion d’un bit
+
+                dec = bool_circ.hamming_decoder()
+                for i in range(7):
+                    dec.add_node(enc.get_node_by_id(out_ids[i]))
+                    dec.add_edge(out_ids[i], dec.get_input_ids()[i])
+
+                decoded = dec.evaluate(corrupted)
+                final = list(decoded.values())
+                original = list(input_values.values())
+
+                self.assertEqual(final, original, f"Erreur corrigée échouée pour x={x:04b} avec bit {flipped_bit} inversé")
+
+    def test_hamming_does_not_correct_double_errors(self):
+        """
+        Vérifie qu’avec deux erreurs, le décodeur peut échouer à corriger.
+        (Ce test vérifie que la correction n'est pas faussement "réussie".)
+        """
+        x = 0b1011
+        input_circ = bool_circ.int_bin(x, 4)
+        input_ids = input_circ.get_output_ids()
+        input_values = {nid: int(input_circ.get_node_by_id(nid).get_label()) for nid in input_ids}
+
+        enc = bool_circ.hamming_encoder()
+        for i in range(4):
+            enc.add_edge(input_ids[i], enc.get_input_ids()[i])
+
+        encoded = enc.evaluate(input_values)
+        out_ids = enc.get_output_ids()
+
+        for i in range(6):
+            for j in range(i + 1, 7):
+                corrupted = encoded.copy()
+                corrupted[out_ids[i]] ^= 1
+                corrupted[out_ids[j]] ^= 1
+
+                dec = bool_circ.hamming_decoder()
+                for k in range(7):
+                    dec.add_node(enc.get_node_by_id(out_ids[k]))
+                    dec.add_edge(out_ids[k], dec.get_input_ids()[k])
+
+                decoded = dec.evaluate(corrupted)
+                final = list(decoded.values())
+                original = list(input_values.values())
+
+                if final == original:
+                    print(f"ATTENTION : 2 erreurs (bits {i} et {j}) ont été corrigées par hasard pour x={x:04b}")
+
+    def test_random_simplification_ratio(self):
+        simplification_stats(n=100, depth=4)

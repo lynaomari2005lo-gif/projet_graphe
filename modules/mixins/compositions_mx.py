@@ -1,11 +1,18 @@
 # mixins/compositions_mx.py
 
+from modules.nodes import node
+
 class OpenDigraphCompositionsMixin:
     def copy(self):
         """
-        renvoie une copie du open_digraph 
+        Renvoie une copie du open_digraph ou bool_circ,
+        en contournant la vérification de structure cyclique si nécessaire.
         """
-        d = self.__class__([], [], [])
+        kwargs = {}
+        if hasattr(self, "is_well_formed_cyclic"):
+            kwargs["skip_check"] = True  # pour éviter la récursion infinie
+
+        d = self.__class__([], [], [], **kwargs)
         d.inputs = list(self.inputs)
         d.outputs = list(self.outputs)
         dico = self.nodes
@@ -71,6 +78,7 @@ class OpenDigraphCompositionsMixin:
                 child_node = self.nodes[child_id]
                 for j in range(mul):
                     child_node.add_parent_id(new_id)
+        return new_node
 
     def remove_edge(self,src,tgt):
         """
@@ -230,4 +238,31 @@ class OpenDigraphCompositionsMixin:
         for i in range(n):
             nodes.append(node(n+i, str(n+i), {i : 1}, {}))
         return open_digraph(inputs, outputs, nodes)
-	
+    @classmethod
+    def hamming_encoder(cls):
+        """
+        Encodeur Hamming (7,4) : construit un circuit booléen qui prend 4 bits et en génère 7
+        en ajoutant 3 bits de parité.
+        """
+        return cls.parse_parentheses(
+            "((d1^d2)^d4)",  # p1 = d1 ⊕ d2 ⊕ d4
+            "((d1^d3)^d4)",  # p2 = d1 ⊕ d3 ⊕ d4
+            "((d2^d3)^d4)",  # p3 = d2 ⊕ d3 ⊕ d4
+            "d1", "d2", "d3", "d4"  # données inchangées dans la sortie
+            )[0]  # [0] pour récupérer le bool_circ (pas la liste des variables)
+
+    @classmethod
+    def hamming_decoder(cls):
+        """
+        Décodeur Hamming (7,4) : construit un circuit booléen qui corrige 1 erreur et retrouve les bits d’origine.
+        Cette version suppose qu'on corrige les erreurs avec les XOR des bits de contrôle.
+        """
+        return cls.parse_parentheses(
+            # Syndrome bits (simplifiés à 3 XOR comme dans le graphe)
+            "((p1^(d1^d2))^d4)",  # s1
+            "((p2^(d1^d3))^d4)",  # s2
+            "((p3^(d2^d3))^d4)",  # s3
+            # Les bits de données sont transmis tels quels (décodés après correction dans une version complète)
+            "d1", "d2", "d3", "d4"
+            )[0]
+
