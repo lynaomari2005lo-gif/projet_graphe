@@ -332,6 +332,8 @@ class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
         return (nbr, dico)
     def liste_op(self):
         """
+        Retourne une liste de sous-graphes correspondant aux composantes connexes du graphe.
+        Chaque sous-graphe est construit à partir des nœuds d'une même composante connexe.
         """
         liste = []
         nbr, dico = self.connected_components()
@@ -346,6 +348,14 @@ class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
             liste.append(grp)
         return liste
     def Dijkstra(self, src, direction = None):
+        """
+        src : int, id du noeud source
+        direction : int ou None : 1 ou -1
+        tgt : int, id du noeud cible
+        Implémente l'algorithme de Dijkstra pour calculer les distances minimales depuis le nœud `src`.
+        Peut être orienté suivant la direction : None (tous les voisins), 1 (enfants uniquement), -1 (parents uniquement).
+        Renvoie un dictionnaire des distances et un dictionnaire des précédents.
+        """
         Q = [src] 
         dist = {src:0}
         prev={}
@@ -366,6 +376,13 @@ class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
                     prev[v] = u
         return dist, prev
     def Dijkstra2(self, src, direction=None, tgt=None):
+        """
+        src : int, id du noeud source
+        direction : int ou None : 1 ou -1
+        tgt : int, id du noeud cible
+        Variante de l'algorithme de Dijkstra avec option d'arrêt anticipé si un nœud cible `tgt` est atteint.
+        Utile pour améliorer l'efficacité lorsqu'on cherche un plus court chemin entre deux nœuds spécifiques.
+        """
         Q = [src] 
         dist = {src: 0}
         prev = {}
@@ -392,6 +409,12 @@ class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
 
         return dist, prev
     def shortest_path(self, u, v):
+        """
+        u : int, Identifiant du nœud de départ
+        v : int, Identifiant du nœud d’arrivée
+        Calcule et retourne le plus court chemin entre deux nœuds `u` et `v` sous forme de liste de nœuds.
+        Utilise Dijkstra2 avec arrêt à la cible `v`. Retourne une liste vide si aucun chemin n'existe.
+        """
         dist, prev = self.Dijkstra2(u, tgt=v)
         if v not in dist:
             return []
@@ -407,6 +430,12 @@ class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
         chemin.reverse()
         return chemin
     def ancetres(self, u, v):
+        """
+        u : int, Identifiant du premier nœud
+        v : int, Identifiant du second nœud
+        Trouve les ancêtres communs entre deux nœuds `u` et `v` (en remontant dans le graphe).
+        Retourne un dictionnaire associant à chaque ancêtre commun la distance depuis `u` et `v`.
+        """
         distu , prev1 = self.Dijkstra2(u, direction=-1)
         distv , prev2 = self.Dijkstra2(v, direction=-1)
         ancetre_com = [] 
@@ -418,9 +447,6 @@ class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
             dico[a] = (distu[a], distv[a])
 
         return dico
-
-
-
     def tri_topologique(self):
         res = []
         g = self.copy()
@@ -436,6 +462,12 @@ class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
 
 
 def inout(liste):
+    """
+    liste : list, liste de noeuds
+    Détermine les identifiants des nœuds d'entrée (sans parents) et de sortie (sans enfants) dans une liste de nœuds.
+    Hypothèse : chaque entrée a un seul enfant, chaque sortie a un seul parent.
+    Retourne un tuple (inputs, outputs) contenant les identifiants.
+    """
     inputs = []
     outputs = []
     for i in range(len(liste)):
@@ -501,10 +533,10 @@ def random_sysmetric_int_matrix(n,bound,null_diag=True):
 
 def random_oriented_int_matrix(n,bound,null_diag=True):
     """
-        n : int, taille de la matrice carré
-        bound : int, chiffre max de la matrice
-        null_diag : bool, False si on ne veut pas spécialement que la diagonale de la matrice soit nulle
-        renvoie une matrice orientée avec une diagonale nulle ou non
+    n : int, taille de la matrice carré
+    bound : int, chiffre max de la matrice
+    null_diag : bool, False si on ne veut pas spécialement que la diagonale de la matrice soit nulle
+    renvoie une matrice orientée avec une diagonale nulle ou non
     """
     m = random_int_matrix(n,bound,null_diag)
     for i in range(n):
@@ -517,10 +549,10 @@ def random_oriented_int_matrix(n,bound,null_diag=True):
 
 def random_triangular_int_matrix(n,bound,null_diag=True):
     """
-        n : int, taille de la matrice carré
-        bound : int, chiffre max de la matrice
-        null_diag : bool, False si on ne veut pas spécialement que la diagonale de la matrice soit nulle
-        renvoie une matrice trianguaire (supérieur ou non)
+    n : int, taille de la matrice carré
+    bound : int, chiffre max de la matrice
+    null_diag : bool, False si on ne veut pas spécialement que la diagonale de la matrice soit nulle
+    renvoie une matrice trianguaire (supérieur ou non)
     """
     m = random_int_matrix(n,bound,null_diag)
     for i in range(n):
@@ -553,21 +585,6 @@ def graph_from_adjacency_matrix(matrix):
     
     return gr
 
-"""
-def test():
-    gr = graph_from_adjacency_matrix([
-        [0, 1, 1, 0, 0],
-        [0, 0, 0, 1, 2],
-        [0, 0, 0, 2, 0],
-        [1, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0]
-    ])
-    nodes = gr.get_nodes_dico()
-    for node in nodes:
-        print(nodes[node])  
-test()
-"""
-
 
 """
 
@@ -585,65 +602,76 @@ class bool_circ(open_digraph):
 
     def is_well_formed_cyclic(self):
         """
-        Vérifie si le circuit est acyclique et respecte les contraintes de degré pour chaque type de nœud.
+        teste si le circuit booléen est bien un circuit booléen(doit être acyclique et respecter les contraintes de degré)
         """
         if self.is_cyclic():
-            return False
+            return  False
         if not self.graph.assert_is_well_formed():
-            return False
+            return  False
         for node in self.get_nodes():
             label = node.get_label()
             indeg = node.indegree()
-            outdeg = node.outdegree()
-            if label in {'0', '1'}:
-                if indeg != 0:
-                    return False
+            outdeg = node.outdegree()  
+            if label == '0' or label == '1':
+                if indeg != 0: 
+                    return  False
             elif label == '':
-                if indeg not in [0, 1]:
+                if indeg not in [0,1]:
                     return False
-            elif label in {'&', '|'}:
-                if indeg < 2 or outdeg != 1:
+            elif label == ' ':
+                if indeg != 1:
                     return False
-            elif label == '~~':
-                if indeg != 1 or outdeg != 1:
+            elif label == '&' or label == '|':
+                if indeg < 2 or outdeg not in [0,1]:
+                    return False
+            elif label == '~':
+                if indeg != 1 or outdeg not in [0,1] :
                     return False
             elif label == '^':
-                if indeg < 2 or outdeg != 1:
+                if indeg < 2 or outdeg not in [0,1]:
                     return False
-            elif label not in {'', '0', '1', '&', '|', '^', '~~'}:
+            elif label not in [' ','0','1','&','|','^','~','res']:
                 return False
         return True
 
     @classmethod
     def int_bin(cls, n, t):
         """
+        n : int, un entier
+        t : int, nombre de bits
         Crée un circuit booléen représentant l'entier `n` sur `t` bits.
         """
         nbin = bin(n)[2:].zfill(t)
         nodes = []
+        inputs = []
         for i in range(t):
             bit = nbin[i]
             nodes.append(node(i, bit, {}, {}))
+            inputs.append(i)
         return cls(open_digraph([], [], nodes))
 
     @classmethod
     def parse_parentheses(cls, *args):
         """
-        Construit un bool_circ à partir de chaînes bien parenthésées.
+        args: string, chaînes de caractères
+        Construit un bool_circ à partir d'une ou plusieurs chaîne de caractères bien parenthésée.
         """
-        root = node(0, '', {}, {})
+        root = node(0, 'res', {}, {})  
         nodes = {0: root}
         current_id = 0
         next_id = 1
-        s2, s3 = '', ''
+        s2 = ''
+        s3 = ''
         val = []
         stack = []
-
+        
         for s in args:
             for char in s:
                 if char == '(':
-                    if s2.strip():
+                    if s2.strip() and s2 != ' ':
                         nodes[current_id].set_label(s2.strip())
+                    if s2 == ' ':
+                        nodes[current_id].set_label(s2)
                     parent = node(next_id, '', {}, {current_id: 1})
                     nodes[current_id].add_parent_id(next_id)
                     nodes[next_id] = parent
@@ -652,34 +680,145 @@ class bool_circ(open_digraph):
                     next_id += 1
                     s2 = ''
                 elif char == ')':
-                    if s2.strip():
+                    if s2.strip() and s2 != ' ':
                         nodes[current_id].set_label(s2.strip())
+                    if s2 == ' ':
+                        nodes[current_id].set_label(s2)
                     if stack:
                         current_id = stack.pop()
-                    if s3.strip() and s3.strip() not in val:
-                        val.append(s3.strip())
                     s2 = ''
+                    if s3.strip() not in val and s3.strip() != '':
+                        val.append(s3.strip())
                     s3 = ''
                 else:
                     s2 += char
-                    if char not in {'|', '^', '~', '&'}:
+                    if (char not in ["|", "^", "~", "&"] )and ( char != ' '):
                         s3 += char
-
+                
         graph = open_digraph([], [], list(nodes.values()))
-
+        
         id_val = {}
-        input_ids = []
+        input_ids =  [id1 for id1, nd in graph.nodes.items() if (nd.get_label() == '1' or  nd.get_label() == '0')]
         for x in val:
-            ids = [i for i, n in graph.nodes.items() if n.get_label() == x]
-            if ids:
-                main_id = ids[0]
-                for other_id in ids[1:]:
-                    graph.fusion_noeuds(main_id, other_id)
-                graph.nodes[main_id].set_label('')
-                input_ids.append(main_id)
-
-        graph.remove_node_by_id(0)
+            if x != '1' and x != '0':
+                ids = [id1 for id1, nd in graph.nodes.items() if nd.get_label() == x]
+                if ids:
+                    main_id = ids[0]
+                    for other_id in ids[1:]:
+                        graph.fusion_noeuds(main_id, other_id)
+                    if graph.nodes[main_id].label not in ['1','0']:
+                        graph.nodes[main_id].set_label('')
+        
         return cls(graph), val
+    def simplify_once(self):
+        """
+        Applique les méthodes de simplication à tous les noeuds du graphe.
+        Si un noeud ayant un opérateur en label à un seul parent, ils sont fusionnés
+        """
+        for n in list(self.nodes):  
+            if n not in self.graph.nodes:
+                continue
+            node = self.graph.get_node_by_id(n)
+            label = node.get_label()
+
+            parents = [self.graph.get_node_by_id(pid) for pid in node.parents if pid in self.graph.nodes]
+            parent_labels = [p.get_label() for p in parents]
+            enfants = [self.graph.get_node_by_id(pid) for pid in node.children if pid in self.graph.nodes]
+            enfants_labels = [p.get_label() for p in enfants]
+
+            # Porte COPIE
+
+            if label == ' ':
+                p = parents[0]
+                #if p.get_label() in ['0', '1']:
+                self.graph.remove_edge(p.id, node.id)
+                node.set_label(p.get_label())
+                nig = self.graph.get_node_by_id(p.id)
+                for c in enfants:
+                    self.graph.add_edge(nig,c)
+                return True
+
+
+            # Porte NON
+            elif label == '~' and len(parents) == 1:
+                p = parents[0]
+                if p.get_label() in ['0', '1']:
+                    self.graph.remove_edge(p.id, node.id)
+                    self.fusion_noeuds(p.id, node.id, label=str(1 - int(p.get_label())))
+                    return True
+
+            # Porte ET
+            elif label == '&':
+                
+                if '0' in parent_labels:
+                    for p in parents:
+                        self.remove_edge(p.id, node.id)
+                    for p in parents:
+                        if p.get_label() == '0':
+                            self.fusion_noeuds(p.id, node.id, label='0')
+                            return True
+                elif '1' in parent_labels:
+                    for p in parents:
+                        if p.get_label() == '1' and len(parents) == 1:
+                            self.remove_edge(p.id, node.id)
+                            self.fusion_noeuds(p.id, node.id, label='1')
+                            return True
+                        if p.get_label() == '1' and len(parents) > 1:
+                            self.remove_edge(p.id, node.id)
+                            return True
+                    #return True
+
+            # Porte OU
+            elif label == '|':
+                if '1' in parent_labels:
+                    for p in parents:
+                        self.remove_edge(p.id, node.id)
+                    for p in parents:
+                        if p.get_label() == '1':
+                            self.fusion_noeuds(p.id, node.id, label='1')
+                            return True
+                elif '0' in parent_labels:
+                    for p in parents :
+                        if p.get_label() == '0' and len(parents) == 1:
+                            self.remove_edge(p.id, node.id)
+                            self.fusion_noeuds(p.id, node.id, label='0')
+                            return True
+                        if p.get_label() == '0' and len(parents) > 1:
+                            self.remove_edge(p.id, node.id)
+                            return True
+                    #return True
+
+            # Porte XOR
+            elif label == '^':
+                if '0' in parent_labels:
+                    for p in parents :
+                        if p.get_label() == '0' and len(parents) == 1:
+                            self.remove_edge(p.id, node.id)
+                            self.fusion_noeuds(p.id, node.id, label='0')
+                            return True
+                        if p.get_label() == '0' and len(parents) > 1:
+                            self.remove_edge(p.id, node.id)
+                            return True
+                elif '1' in parent_labels:
+                    # XOR avec 1 revient à une négation
+                    ni = self.add_node(label='^')
+                    nig = self.get_node_by_id(ni)
+                    node.set_label('~')
+                    for p in parents:
+                        self.graph.remove_edge(p.id, node.id)
+                        if p.get_label() != "1":
+                            self.graph.add_edge(p, nig)
+                    self.graph.add_edge(nig, node)
+                    return True
+
+        return False
+
+    def evaluate(self):
+        """
+        Applique simplify_once tant que nécessaire
+        """
+        while self.simplify_once():
+            pass
     @classmethod
     def encoder(cls):
         return cls.parse_parentheses(

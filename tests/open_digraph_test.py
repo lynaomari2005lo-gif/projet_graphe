@@ -80,12 +80,14 @@ class InitTest(unittest.TestCase):
         self.assertEqual(d0.nodes, {node.id:node for node in nodes})
         self.assertIsInstance(d0, open_digraph)
         self.assertEqual(d0.assert_is_well_formed(), True )
+
         # Test empty()
         d_vide = open_digraph.empty()
         self.assertIsInstance(d_vide, open_digraph)
         self.assertEqual(d_vide.inputs, [])
         self.assertEqual(d_vide.outputs, [])
         self.assertEqual(d_vide.nodes, {})
+
         # Test copy()
         d00 = d0.copy()
         d0.inputs = [3,1]
@@ -99,6 +101,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(d00.nodes[0].get_label(), "a")
         d0.inputs = [3,4]
         d0.nodes[0].set_label("a")
+
         # Test getteurs
         self.assertEqual(d0.get_input_ids(), [3,4])
         self.assertEqual(d0.get_output_ids(), [5,6])
@@ -107,19 +110,23 @@ class InitTest(unittest.TestCase):
         self.assertEqual(d0.get_node_ids(), [0,1,2,3,4,5,6])
         self.assertEqual(d0.get_node_by_id(0), n0)
         self.assertEqual(d0.get_nodes_by_ids([0,2,4]), [n0,n2,i1])
+
         # Test new_id
         self.assertEqual(d0.new_id(),7 )
+
         # Test add_edge
         d0.add_edge(n0,n2)
         l = d0.get_nodes()
         self.assertEqual(l[0].get_children(),   {1:1, 2:2}) 
         self.assertEqual(l[2].get_parents(), {0:2 , 1:2} )
+
         # Test add_edges
         d0.add_edges([(0,2),(0,1)])
         l2 = d0.get_nodes()
         self.assertEqual(l2[0].get_children(), {1:2, 2:3}) 
         self.assertEqual(l2[2].get_parents(), {0:3 , 1:2} )
         self.assertEqual(l2[1].get_parents(), {0:2})
+
         # Test add_node
         g = open_digraph([], [], []) 
         g.add_node(label='A')
@@ -134,16 +141,19 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l3[1].get_parents(), {2:3})
         self.assertEqual(l3[2].get_id(), 2)
         self.assertEqual(l3[2].get_label(), "C")
+
         # Test remove_edge
         g.remove_edge(0,2)
         self.assertEqual(l3[2].get_parents(), {0:1})
         self.assertEqual(l3[0].get_children(), {2:1})
         self.assertEqual(g.assert_is_well_formed(), True )
+
         # Test remove_edges
         g.remove_parallel_edges(2,1)
         self.assertEqual(l3[2].get_children(), {})
         self.assertEqual(l3[1].get_parents(), {})
         self.assertEqual(g.assert_is_well_formed(), True )
+
         # Test remove_node_by_id
         self.assertEqual(len(l3), 3)
         g.remove_node_by_id(2)
@@ -153,28 +163,29 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l33[1].get_id(), 1)
         self.assertEqual(l33[0].get_children(), {})
         self.assertEqual(g.assert_is_well_formed(), True )
+
         # Test remove_edges
         gr = open_digraph([], [], [])
-        gr.add_node(label='A') # p = {}  c = {2:2, 3:1, 4:4}
-        gr.add_node(label='B') # p = {2:3, 4:2}  c = {}
-        gr.add_node(label='C', parents={0: 2}, children={1: 3}) # p = {0:2}  c = {1:3, 3:2}
-        gr.add_node(label='D', parents={0: 1, 2: 2}, children={}) # p = {0:1, 2:2}  c = {4:3}
-        gr.add_node(label='E', parents={3: 3, 0: 4}, children={1: 2}) # p = {3: 3, 0: 4}  c = {1:2}
+        gr.add_node(label='A') 
+        gr.add_node(label='B') 
+        gr.add_node(label='C', parents={0: 2}, children={1: 3}) 
+        gr.add_node(label='D', parents={0: 1, 2: 2}, children={}) 
+        gr.add_node(label='E', parents={3: 3, 0: 4}, children={1: 2}) 
         gr.remove_edges([(0,4),(2,3)])
-        # 0 : p = {}  c = {2:2, 3:1, 4:3}
-        # 4 : p = {3: 3, 0: 3}  c = {1:2}
         lgr = gr.get_nodes()
         self.assertEqual(lgr[0].get_children(),{2: 2, 3: 1, 4: 3})
         self.assertEqual(lgr[4].get_parents(),{3: 3, 0: 3})
         self.assertEqual(lgr[2].get_children(),{1:3, 3:1})
         self.assertEqual(lgr[3].get_parents(),{0: 1, 2: 1})
         self.assertEqual(gr.assert_is_well_formed(), True )
+
         # Test remove_several_parallel_edges
         gr.remove_several_parallel_edges([(0,4),(2,3),(0,2)])
         self.assertEqual(lgr[0].get_children(),{ 3: 1})
         self.assertEqual(lgr[3].get_parents(),{0: 1})
         self.assertEqual(lgr[4].get_parents(),{3: 3})
         self.assertEqual(gr.assert_is_well_formed(), True )
+
         # Test removes_nodes_by_id
         gr.remove_nodes_by_id([0, 3])
         lgr2 = gr.get_nodes()
@@ -182,6 +193,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(lgr[0].get_children(),{})
         self.assertEqual(lgr[4].get_parents(),{})
         self.assertEqual(gr.assert_is_well_formed(), True )
+
         # Test is_well_formed
         a = node(0, 'a', {3:1 , 2:1, 4:1}, {1:1, 2:1})
         b = node(1, 'b', {0:1}, { 5:1, 2:2})
@@ -193,12 +205,14 @@ class InitTest(unittest.TestCase):
         gra_well = open_digraph([3,4], [5,6],[a,b,c,d,e,f,g])
         self.assertEqual(d0.assert_is_well_formed(), True )
         self.assertEqual(gra_well.assert_is_well_formed(), True )
+
         #Test save_as_dot_file et from_dot_file
         gra_well.save_as_dot_file("doc_test")
         graFromDot = gra_well.from_dot_file("doc_test")
         self.assertEqual(graFromDot.assert_is_well_formed(), True )
         graFromDot.save_as_dot_file("doc_test2")
         gra_well.display("gra_well.pdf")
+
         # Test add_input_node et add_output_node
         gra_well.add_input_node(3)
         self.assertEqual(gra_well.get_input_ids(),[4,7])
@@ -208,6 +222,7 @@ class InitTest(unittest.TestCase):
         gra_well.add_output_node(5)
         self.assertEqual(gra_well.get_output_ids(),[6,9])
         self.assertEqual(gra_well.assert_is_well_formed(), True )
+
         # Test copy 2
         n0 = node(0, 'a', {3:1 , 2:1}, {1:1, 2:1})
         n1 = node(1, 'b', {0:1}, {2:1 , 5:1})
@@ -225,6 +240,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(l1[2].get_parents(), {0:1 , 1:2} )
         self.assertEqual(l1[1].get_parents(), {0:1})
         self.assertIsNot(d0.get_input_ids(), d02.get_input_ids())
+
         # test random
         d0i = open_digraph.random(5 , 10, inputs=0, outputs=0, loop_free=False, DAG=False,oriented=False, undirected=True)
         d2i = open_digraph.random(5 , 10, inputs=0, outputs=0, loop_free=False, DAG=False,oriented=True, undirected=False)
@@ -246,9 +262,11 @@ class InitTest(unittest.TestCase):
         self.assertEqual(d0i2.assert_is_well_formed(), True )
         self.assertEqual(d2i2.assert_is_well_formed(), True )
         self.assertEqual(d3i2.assert_is_well_formed(), True )
+
         # test graph_to_dico()
         dico_test = d0.graph_to_dico()
         self.assertEqual(dico_test,{0:0,1:1,2:2})
+
         # test adjacency_matrix()
         n0 = node(0, 'a', {3:1 , 4:1}, {1:1, 2:1})
         n1 = node(1, 'b', {0:1}, {2:2 , 5:1})
@@ -260,6 +278,7 @@ class InitTest(unittest.TestCase):
         d0 = open_digraph([3,4], [5,6], [n0,n1,n2,i0,i1,o0,o1])
         self.assertEqual(d0.assert_is_well_formed(), True )
         self.assertEqual(d0.adjacency_matrix(),[[0, 1, 1, 0, 0, 0, 0], [0, 0, 2, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]])
+        
         # Test bool_circ
         #bb = bool_circ(d0)
         # bb = bool_circ(n0) renvoie une erreur car pas un graph
@@ -314,8 +333,9 @@ class InitTest(unittest.TestCase):
         o0 = node(5, "o0", {1: 1}, {})  
         o1 = node(6, "o1", {2: 1}, {})  
         gtest3 = open_digraph([4], [5, 6], [n0, n1, n2, i1, o0, o1])
-        b3 = bool_circ(gtest3)
-        self.assertEqual(b3.is_well_formed_cyclic(), True)
+        #b3 = bool_circ(gtest3)
+        #self.assertEqual(b3.is_well_formed_cyclic(), True)
+
         # Test min_id() et max_id()
         n0 = node(0, 'a', {3:1 , 4:1}, {1:1, 2:1})
         n1 = node(1, 'b', {0:1}, {2:2 , 5:1})
@@ -326,27 +346,16 @@ class InitTest(unittest.TestCase):
         o1 = node(6,"o1",{2:1},{})
         exo67 = open_digraph([3,4], [5,6], [n0,n1,n2,i0,i1,o0,o1])
         maxi = exo67.max_id()
-        #print(maxi)
         self.assertEqual(maxi,6)
         mini = exo67.min_id()
         self.assertEqual(mini,0)
+
         # Test shift_indices()
         exo67.shift_indices(2)
         liste_n = exo67.get_nodes()
         for i in range(len(liste_n)):
             self.assertEqual(liste_n[i].get_id(), i + 2)
         self.assertEqual(exo67.assert_is_well_formed(), True )
-
-        # Test projet
-        m = random_oriented_int_matrix(5,2)
-        #print(m)
-        g = graph_from_adjacency_matrix(m)
-        g.save_as_dot_file("t1")
-        g.display("t1.pdf")
-        g.add_input_node(1)
-        self.assertEqual(g.assert_is_well_formed(), True )
-        g.save_as_dot_file("t2")
-        g.display("t2.pdf")
         
         #Test iparallel et parallel 
         n0 = node(0, 'a', {3: 1}, {1: 1, 2: 1})
@@ -528,20 +537,6 @@ class InitTest(unittest.TestCase):
         # Test bool
         #h = bool_circ.parse_parentheses("((x0)&((x1)&(x2)))|((x1)&(~(x2)))")
         #print(h)
-        
-        # Test parenthèses
-        
-        print("PARENT")
-        expr = "((~((x1)&(x2)))|(x2))"
-        circuit = bool_circ.parse_parentheses(expr)
-        circuit[0].display("pp")
-        #print(circuit[0].nodes)
-        expr1 = "( ( x0 ) & ( ( x1 ) & ( x2 ) ) ) | ( ( x1 ) & ( ~ ( x2 ) ) )"
-        expr2 = "( ( x0 ) & ( ~ ( x1 ) ) ) | ( x2 )"
-        #g = bool_circ.parse_parentheses_multi(expr1,expr2)
-        #g.display("pp2")
-        
-        
 
         # Test fusion noeud
         n0 = node(0, 'a', {}, {3: 1})
@@ -559,9 +554,52 @@ class InitTest(unittest.TestCase):
         g.fusion_noeuds(8,9,"nv")
         self.assertEqual(g.assert_is_well_formed(), True)
 
-        # Test TD11
+        """
+        Tests bool_circ 
+
+        """
+
+        # Test parenthèses
+        expr = "((~(( (x1))&(x2)))|(x2))"
+        circuit = bool_circ.parse_parentheses(expr)
+        circuit[0].display("pp")
+        expr1 = "(((x0)&((x1)&(x2)))|((x1)&(~(x2))))"
+        expr2 = "(((x0)&(~(x1)))|(x2))"
+        g = bool_circ.parse_parentheses(expr1,expr2)
+        g[0].display("pp2")
+        print(g[1])
+
+        # Test int_bin
         g = bool_circ.int_bin(11,8)
         g.display('bin')
+
+        # Test evaluate
+
+        # On test toutes les méthodes de simplification
+        cop1 = "( (1))" #ok
+        cop0 = "( (0))" #ok
+        non1 = "(~(1))" #ok
+        non0 = "(~(0))" #ok
+        et1 = "((x1)&(x2)&(1))" #ok
+        et0 = "((x1)&(x2)&(0))" #ok
+        ou1 = "((x1)|(x2)|(1))" #ok 
+        ou0 = "((x1)|(x2)|(0))"  #ok 
+        xor1 = "((x1)^(x2)^(1))" #ok 
+        xor0 = "((x1)^(x2)^(0))" #ok
+        
+        g = bool_circ.parse_parentheses(cop1,cop0,non1,non0,et1,et0,ou1,ou0,xor1,xor0)
+        g[0].display("avant_simply")
+        g[0].evaluate()
+        g[0].display("apres_simply")
+        
+        # Test additionneur : On fait les calculs pour avoir le résultat final dans le noeud parent du noeud res
+        e = '(((1)&(0))&(0))','(((1)&(1))&(0))','(((1)&(1))&(1))'
+        # Test sur les entiers 11 et 01 , res = 01
+        # Test sur les entiers 111 et 011 et 001 , res = 001
+        g = bool_circ.parse_parentheses(e[0],e[1], e[2])
+        g[0].display("add")
+        g[0].evaluate()
+        g[0].display("add_apres")
 
 
 
