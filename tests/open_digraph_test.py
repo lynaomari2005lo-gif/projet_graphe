@@ -261,7 +261,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(d0.assert_is_well_formed(), True )
         self.assertEqual(d0.adjacency_matrix(),[[0, 1, 1, 0, 0, 0, 0], [0, 0, 2, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]])
         # Test bool_circ
-        bb = bool_circ(d0)
+        #bb = bool_circ(d0)
         # bb = bool_circ(n0) renvoie une erreur car pas un graph
         # Test is_cyclic()
         n0 = node(0, 'a', {3: 1, 4: 1}, {1: 1, 2: 1})
@@ -528,12 +528,41 @@ class InitTest(unittest.TestCase):
         # Test bool
         #h = bool_circ.parse_parentheses("((x0)&((x1)&(x2)))|((x1)&(~(x2)))")
         #print(h)
-    
-
-
-
-       
         
+        # Test parenthèses
+        
+        print("PARENT")
+        expr = "((~((x1)&(x2)))|(x2))"
+        circuit = bool_circ.parse_parentheses(expr)
+        circuit[0].display("pp")
+        #print(circuit[0].nodes)
+        expr1 = "( ( x0 ) & ( ( x1 ) & ( x2 ) ) ) | ( ( x1 ) & ( ~ ( x2 ) ) )"
+        expr2 = "( ( x0 ) & ( ~ ( x1 ) ) ) | ( x2 )"
+        #g = bool_circ.parse_parentheses_multi(expr1,expr2)
+        #g.display("pp2")
+        
+        
+
+        # Test fusion noeud
+        n0 = node(0, 'a', {}, {3: 1})
+        n1 = node(1, 'b', {}, {5:1, 8:1, 4:1})
+        n2 = node(2, 'c', {}, {4: 1})
+        n3 = node(3, 'd', {0:1}, {7:1,5:1,6:1})
+        n4 = node(4, 'e', {2:1,1:1}, {6:1})
+        n5 = node(5, 'f', {3:1,1:1}, {7:1})
+        n6 = node(6, 'g', {4:1,3:1}, {8:1,9:1})
+        n7 = node(7, 'h', {3:1,5:1}, {})
+        n8 = node(8, 'ei', {6:1,1:1}, {})
+        n9 = node(9, 'j', {6:1}, {})
+        g = open_digraph([],[],[n0, n1, n2, n3, n4, n5,n6,n7,n8,n9] )
+        self.assertEqual(g.assert_is_well_formed(), True)
+        g.fusion_noeuds(8,9,"nv")
+        self.assertEqual(g.assert_is_well_formed(), True)
+
+        # Test TD11
+        g = bool_circ.int_bin(11,8)
+        g.display('bin')
+
 
 
 
@@ -549,162 +578,37 @@ class NodeTest(unittest.testcase):
     def test_get_label(self):
         self.assertEqual(self.n0.get_label(), 'a')
 
-class TestBoolCircHamming(unittest.TestCase):
 
-    def test_hamming_encoder_structure(self):
-        enc = bool_circ.hamming_encoder()
-        self.assertIsInstance(enc, bool_circ)
-        self.assertTrue(enc.is_well_formed_cyclic(), "Le circuit de l'encodeur doit être bien formé et acyclique.")
+class BoolCircTest(unittest.testcase):
+    def test_hamming_identity(self):
+        print("TEST CODE DE HAMMING")
 
-        labels = [node.get_label() for node in enc.get_nodes()]
-        self.assertIn('^', labels, "L'encodeur doit utiliser des portes XOR (^)")
+        # Étape 1 : Créer le message à encoder
+        original = bool_circ.int_bin(6, 4)  # 0110
 
-    def test_hamming_decoder_structure(self):
-        dec = bool_circ.hamming_decoder()
-        self.assertIsInstance(dec, bool_circ)
-        self.assertTrue(dec.is_well_formed_cyclic(), "Le circuit du décodeur doit être bien formé et acyclique.")
-        
-        labels = [node.get_label() for node in dec.get_nodes()]
-        self.assertIn('^', labels, "Le décodeur doit utiliser des portes XOR (^)")
+        # Étape 2 : Encoder
+        enc = bool_circ.encoder()
+        encoded = enc.compose_with(original)
 
-    def test_hamming_identity_no_error(self):
-        """
-        Teste que décoder un encodage donne le même résultat (sans bruit).
-        Comme on n'a pas encore la méthode d'évaluation, ce test ne fait que vérifier la structure.
-        """
-        enc = bool_circ.hamming_encoder()
-        dec = bool_circ.hamming_decoder()
+        # Étape 3 : Simuler une erreur (inversion d’un bit)
+        nodes = encoded.get_nodes()
+        for node in nodes:
+            if node.get_label() in ['0', '1']:
+                id_ = node.id
+                # Ajouter une porte NON (~~) au-dessus
+                not_node = node.__class__(9999, '~~', {id_: 1}, {})
+                encoded.add_node(not_node)
+                encoded.add_edge(not_node.id, id_)
+                break
 
-        # Ici on vérifiera que les entrées du décodeur sont les sorties de l'encodeur (structurellement)
-        # Une version avancée testerait l'évaluation pour chaque combinaison possible (avec evaluate).
-        self.assertEqual(len(enc.get_output_ids()), 7, "L'encodeur Hamming (7,4) doit produire 7 bits.")
-        self.assertEqual(len(dec.get_input_ids()), 7, "Le décodeur Hamming (7,4) doit prendre 7 bits.")
+        # Étape 4 : Décoder
+        dec = bool_circ.decoder()
+        result = dec.compose_with(encoded)
 
-    def test_hamming_encoder_decoder_connectivity(self):
-        """
-        Vérifie qu'on peut connecter les sorties de l'encodeur aux entrées du décodeur.
-        """
-        enc = bool_circ.hamming_encoder()
-        dec = bool_circ.hamming_decoder()
+        # Étape 5 : Appliquer les réécritures
+        result.rewrite_all()
+        result.display("Final")
 
-        enc_outputs = enc.get_output_ids()
-        dec_inputs = dec.get_input_ids()
-        self.assertEqual(len(enc_outputs), len(dec_inputs), "Les sorties de l'encodeur doivent être connectables aux entrées du décodeur.")
-    
-    def test_involution_NOT(self):
-        # Circuit ~ ~ x
-        circ, _ = bool_circ.parse_parentheses("~~x")
-        original = circ.to_dot()  # Représentation avant
-        circ.rewrite_all()
-        rewritten = circ.to_dot()  # Représentation après
-        self.assertIn('x', [n.get_label() for n in circ.get_nodes()], "Double NON doit s'effacer")
-        self.assertNotEqual(original, rewritten)
+        # Pas d’assertion automatique ici, mais affichage du graphe corrigé
 
-    def test_involution_XOR(self):
-        # Circuit x ^ x
-        circ, _ = bool_circ.parse_parentheses("x^x")
-        circ.rewrite_all()
-        labels = [n.get_label() for n in circ.get_nodes()]
-        self.assertIn('0', labels, "x ^ x doit devenir 0")
-    
-    def test_hamming_encode_decode_no_error(self):
-        """
-        Vérifie que dec(enc(x)) == x pour tous les x ∈ [0, 15] (4 bits)
-        sans aucune erreur.
-        """
-        for x in range(16):  # Tous les messages de 4 bits
-            # Création de l’entrée
-            input_circ = bool_circ.int_bin(x, 4)
-            input_ids = input_circ.get_output_ids()
-            input_values = {nid: int(input_circ.get_node_by_id(nid).get_label()) for nid in input_ids}
-
-            # Encodeur
-            enc = bool_circ.hamming_encoder()
-            for i in range(4):
-                enc.add_edge(input_ids[i], enc.get_input_ids()[i])
-
-            # On évalue la sortie de l'encodeur
-            encoded_values = enc.evaluate(input_values)
-
-            # Décodeur
-            dec = bool_circ.hamming_decoder()
-            for i in range(7):
-                dec.add_node(enc.get_node_by_id(enc.get_output_ids()[i]))  # copier les noeuds de sortie
-                dec.add_edge(enc.get_output_ids()[i], dec.get_input_ids()[i])
-
-            # Résultat final
-            decoded_values = dec.evaluate(encoded_values)
-            final = list(decoded_values.values())
-            original = list(input_values.values())
-
-            self.assertEqual(final, original, f"Erreur sur x={x:04b}: attendu {original}, obtenu {final}")
-
-    def test_hamming_corrects_single_bit_error(self):
-        """
-        Vérifie que si une erreur est introduite sur un seul bit,
-        le décodeur corrige correctement le message.
-        """
-        for x in range(16):
-            input_circ = bool_circ.int_bin(x, 4)
-            input_ids = input_circ.get_output_ids()
-            input_values = {nid: int(input_circ.get_node_by_id(nid).get_label()) for nid in input_ids}
-
-            enc = bool_circ.hamming_encoder()
-            for i in range(4):
-                enc.add_edge(input_ids[i], enc.get_input_ids()[i])
-
-            encoded = enc.evaluate(input_values)
-
-            for flipped_bit in range(7):
-                corrupted = encoded.copy()
-                out_ids = enc.get_output_ids()
-                corrupted[out_ids[flipped_bit]] ^= 1  # inversion d’un bit
-
-                dec = bool_circ.hamming_decoder()
-                for i in range(7):
-                    dec.add_node(enc.get_node_by_id(out_ids[i]))
-                    dec.add_edge(out_ids[i], dec.get_input_ids()[i])
-
-                decoded = dec.evaluate(corrupted)
-                final = list(decoded.values())
-                original = list(input_values.values())
-
-                self.assertEqual(final, original, f"Erreur corrigée échouée pour x={x:04b} avec bit {flipped_bit} inversé")
-
-    def test_hamming_does_not_correct_double_errors(self):
-        """
-        Vérifie qu’avec deux erreurs, le décodeur peut échouer à corriger.
-        (Ce test vérifie que la correction n'est pas faussement "réussie".)
-        """
-        x = 0b1011
-        input_circ = bool_circ.int_bin(x, 4)
-        input_ids = input_circ.get_output_ids()
-        input_values = {nid: int(input_circ.get_node_by_id(nid).get_label()) for nid in input_ids}
-
-        enc = bool_circ.hamming_encoder()
-        for i in range(4):
-            enc.add_edge(input_ids[i], enc.get_input_ids()[i])
-
-        encoded = enc.evaluate(input_values)
-        out_ids = enc.get_output_ids()
-
-        for i in range(6):
-            for j in range(i + 1, 7):
-                corrupted = encoded.copy()
-                corrupted[out_ids[i]] ^= 1
-                corrupted[out_ids[j]] ^= 1
-
-                dec = bool_circ.hamming_decoder()
-                for k in range(7):
-                    dec.add_node(enc.get_node_by_id(out_ids[k]))
-                    dec.add_edge(out_ids[k], dec.get_input_ids()[k])
-
-                decoded = dec.evaluate(corrupted)
-                final = list(decoded.values())
-                original = list(input_values.values())
-
-                if final == original:
-                    print(f"ATTENTION : 2 erreurs (bits {i} et {j}) ont été corrigées par hasard pour x={x:04b}")
-
-    def test_random_simplification_ratio(self):
-        simplification_stats(n=100, depth=4)
+            

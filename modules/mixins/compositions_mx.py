@@ -5,14 +5,10 @@ from modules.nodes import node
 class OpenDigraphCompositionsMixin:
     def copy(self):
         """
-        Renvoie une copie du open_digraph ou bool_circ,
-        en contournant la vérification de structure cyclique si nécessaire.
+        renvoie une copie du open_digraph 
         """
-        kwargs = {}
-        if hasattr(self, "is_well_formed_cyclic"):
-            kwargs["skip_check"] = True  # pour éviter la récursion infinie
-
-        d = self.__class__([], [], [], **kwargs)
+        from modules.open_digraph import open_digraph  # Import local
+        d = open_digraph( [], [], [] )
         d.inputs = list(self.inputs)
         d.outputs = list(self.outputs)
         dico = self.nodes
