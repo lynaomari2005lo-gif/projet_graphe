@@ -1,13 +1,12 @@
 # mixins/compositions_mx.py
 
 from modules.nodes import node
-
+from modules.open_digraph import open_digraph
 class OpenDigraphCompositionsMixin:
     def copy(self):
         """
         renvoie une copie du open_digraph 
         """
-        from modules.open_digraph import open_digraph  # Import local
         d = open_digraph( [], [], [] )
         d.inputs = list(self.inputs)
         d.outputs = list(self.outputs)

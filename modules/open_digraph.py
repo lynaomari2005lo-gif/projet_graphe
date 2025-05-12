@@ -1,8 +1,7 @@
 from random import *
-from modules.mixins.compositions_mx import OpenDigraphCompositionsMixin
 from modules.nodes import node
 
-class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
+class open_digraph(): # for open directed graph
     def __init__(self, inputs, outputs, nodes):
         """
         inputs : int list ; the ids of the input nodes
@@ -56,6 +55,269 @@ class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
         self.inputs.append(idi)
     def add_output_id(self,ido):
         self.outputs.append(ido)
+        # mixins/compositions_mx.py
+
+    def copy(self):
+        """
+        renvoie une copie du open_digraph 
+        """
+        d = open_digraph( [], [], [] )
+        d.inputs = list(self.inputs)
+        d.outputs = list(self.outputs)
+        dico = self.nodes
+        new_dico = {}
+        for n in dico:
+            new_dico[n] = dico[n].copy()
+        d.nodes = new_dico
+        return d
+
+    def new_id(self):
+        """
+        renvoie un id non utilisé dans le graphe
+        """
+        id_n = self.get_node_ids()
+        next_id = 0
+        while next_id in id_n:
+            next_id += 1
+        return next_id
+
+    def add_edge(self, src, tgt):
+        """
+        src : node ; noeud source
+        tgt : node ; noeud target
+        rajoute une arrête du noeud d'id src au noeud d'id tgt
+        """
+        src.add_child_id(tgt.get_id())
+        tgt.add_parent_id(src.get_id())
+
+    def add_edges(self, edges):
+        """
+        edges : int tuple list; liste de paires d'id
+        rajoute une arrête entre chacune des paires
+        """
+        for (src, tgt) in edges:
+            self.nodes[src].add_child_id(tgt)
+            self.nodes[tgt].add_parent_id(src)
+
+    def add_node(self, label = "", parents = None, children = None):
+        """
+        label : string ; label du noeud, rien par défaut
+        parents : int dict; noeuds du parent
+        children : int dict; noeud de l'enfant
+        rajoute un noeud au graphe et le lie avec les noeuds d'ids parents et children.
+        Si None : attribue un dictionnaire vide.
+        renvoie l'id du nouveau noeud
+        """
+        if parents is None:
+            parents = {}
+        if children is None:
+            children = {}
+        new_id = self.new_id()
+        new_node = node(new_id, label, parents, children)
+        self.nodes[new_id] = new_node
+
+        for parent_id, mul in parents.items():
+            if parent_id in self.nodes:
+                parent_node = self.nodes[parent_id]
+                for i in range(mul):
+                    parent_node.add_child_id(new_id)
+
+        for child_id, mul in children.items():
+            if child_id in self.nodes:
+                child_node = self.nodes[child_id]
+                for j in range(mul):
+                    child_node.add_parent_id(new_id)
+        return new_id
+
+    def remove_edge(self,src,tgt):
+        """
+        src : int ; id du noeud source
+        tgt : int ; id du noeud target
+        retire une arrête entre le noeud source et le noeud target
+        """
+        s = self.get_node_by_id(src)
+        t = self.get_node_by_id(tgt)
+        s.remove_child_once(tgt)
+        t.remove_parent_once(src)
+    def remove_parallel_edges(self,src,tgt):
+        """
+        src : int ; id du noeud source
+        tgt : int ; id du noeud target
+        retire toutes les arrêtes entre le noeud source et le noeud target
+        """
+        s = self.get_node_by_id(src)
+        t = self.get_node_by_id(tgt)
+        s.remove_child_id(tgt)
+        t.remove_parent_id(src)
+    def remove_node_by_id(self,n):
+        """
+        n : int ; id du noeud à supprimer
+        supprime le noeud d'id n dans le graphe
+        """
+        for nd in self.nodes :
+            snd = self.get_node_by_id(nd)
+            if n in snd.get_children():
+                self.remove_parallel_edges(nd,n)
+            if n in snd.get_parents():
+                self.remove_parallel_edges(n,nd)
+        self.nodes.pop(n)
+    def remove_edges(self,liste):
+        """
+        liste : (int*int) list; liste de paires (src,tgt)
+        retire une arrête entre toutes les paires (src,tgt)
+        """
+        for src_id,tgt_id in liste:
+            self.remove_edge(src_id,tgt_id)
+    def remove_several_parallel_edges(self,liste):
+        """
+        liste : (int*int) list; liste de paires (src,tgt)
+        retire toutes les arrêtes entre toutes les paires (src,tgt)
+        """
+        for src_id,tgt_id in liste:
+            self.remove_parallel_edges(src_id,tgt_id)
+
+    def remove_nodes_by_id(self,liste):
+        """
+        liste : (int) list; liste de id des noeuds à supprimer
+        supprime les noeuds du graphe dont l'id est dans la liste
+        """
+        for id in liste:
+             self.remove_node_by_id(id)
+    
+    def fusion_noeuds(self, id1, id2, label=None):
+        return """
+        node1 = self.get_node_by_id(id1)
+        node2 = self.get_node_by_id(id2)
+        nv_label = ""
+        if label == None:
+            nv_label = node1.get_label()
+        else:
+            nv_label = label
+        for parent_id, mult in node2.get_parents().items():
+            self.add_edges(parent_id, id1, mult)
+        for child_id, mult in node2.get_children().items():
+            self.add_edges(id1, child_id, mult)
+        self.remove_node_by_id(id2)
+        self.get_node_by_id(id1).set_label(nv_label)"""
+    def compose(self, f, g):
+        """
+        f : open_digraph
+        g : open_digraph
+        méthode qui renvoie un nouveau graphe qui est la composition en séquence de f et g (sans modifier ces derniers)
+        """
+        ff = f.copy()
+        ff.icompose(g)
+        return ff
+    def icompose(self, f):
+        """
+        g : open_digraph 
+        méthode qui ajoute g à self avec un composition en séquence ( g n'est pas modifié) 
+        """
+        ff = f.copy()
+        out_ff = ff.get_output_ids()
+        inp_self = self.get_input_ids()
+        if len(out_ff) != len(inp_self) :
+            raise Exception("le nombre d'entrées du graphe ne coïncident pas avec le nombre de sorties du graphe donné en paramètre")
+        else :
+            nodes_self = self.get_nodes()
+            n = len(nodes_self)
+            ff.shift_indices(n)
+            nodes_gg = ff.get_nodes()
+            self.nodes.update(ff.get_nodes_dico())
+            out_ff = ff.get_output_ids()
+            for i in range(len(out_ff)) :
+                self.add_edge(self.nodes[out_ff[i]],self.nodes[inp_self[i]])
+            self.inputs = ff.get_input_ids()
+    def shift_indices(self, n):
+        """
+        n : int, valeur à ajouter aux indices
+        ajoute n à tous les indices du graphe, n peut être négatif
+        """
+        new_nodes = {}
+        for node_id, node in self.nodes.items():
+            new_id = node_id + n
+            new_node = node.copy()
+            new_node.set_id(new_id)
+            new_node.set_parents({k + n: v for k, v in node.parents.items()})
+            new_node.set_children({k + n: v for k, v in node.children.items()})
+            new_nodes[new_id] = new_node
+        self.nodes = new_nodes
+        self.inputs = [i + n for i in self.inputs]
+        self.outputs = [o + n for o in self.outputs]   
+    def iparallel(self, g):
+        """
+        g : open_digraph 
+        méthode qui ajoute g à self avec un composition en parallèle ( g n'est pas modifié) 
+        """
+        gg = g.copy()
+        nodes_self = self.get_nodes()
+        n = len(nodes_self)
+        gg.shift_indices(n)
+        nodes_gg = gg.get_nodes()
+        if nodes_self == []:
+            self.nodes = gg.get_nodes_dico()
+        elif nodes_gg == [] :
+            nodes_self = nodes_self
+        else :
+            self.nodes.update(gg.get_nodes_dico())
+            self.add_edge(nodes_self[0], nodes_gg [0])
+
+    def parallel(self,f, g):
+        """
+        f : open_digraph
+        g : open_digraph
+        méthode qui renvoie un nouveau graphe qui est la composition en parallèle de f et g (sans modifier ces derniers)
+        """
+        ff = f.copy()
+        ff.iparallel(g)
+        return ff
+    @classmethod
+    def identity(cls, n):
+        """
+        n : int ; nombre de fils
+        Crée un open_digraph représentant l'identité sur n fils.
+        """
+        from modules.open_digraph import open_digraph  # Import local
+        inputs = []
+        outputs = []
+        for i in range(n):
+            inputs.append(i)
+            outputs.append(n + i)
+        nodes = []
+        for i in range(n):
+            nodes.append(node(i, str(i), {}, {n+i : 1}))
+        for i in range(n):
+            nodes.append(node(n+i, str(n+i), {i : 1}, {}))
+        return open_digraph(inputs, outputs, nodes)
+    @classmethod
+    def hamming_encoder(cls):
+        """
+        Encodeur Hamming (7,4) : construit un circuit booléen qui prend 4 bits et en génère 7
+        en ajoutant 3 bits de parité.
+        """
+        return cls.parse_parentheses(
+            "((d1^d2)^d4)",  # p1 = d1 ⊕ d2 ⊕ d4
+            "((d1^d3)^d4)",  # p2 = d1 ⊕ d3 ⊕ d4
+            "((d2^d3)^d4)",  # p3 = d2 ⊕ d3 ⊕ d4
+            "d1", "d2", "d3", "d4"  # données inchangées dans la sortie
+            )[0]  # [0] pour récupérer le bool_circ (pas la liste des variables)
+
+    @classmethod
+    def hamming_decoder(cls):
+        """
+        Décodeur Hamming (7,4) : construit un circuit booléen qui corrige 1 erreur et retrouve les bits d’origine.
+        Cette version suppose qu'on corrige les erreurs avec les XOR des bits de contrôle.
+        """
+        return cls.parse_parentheses(
+            # Syndrome bits (simplifiés à 3 XOR comme dans le graphe)
+            "((p1^(d1^d2))^d4)",  # s1
+            "((p2^(d1^d3))^d4)",  # s2
+            "((p3^(d2^d3))^d4)",  # s3
+            # Les bits de données sont transmis tels quels (décodés après correction dans une version complète)
+            "d1", "d2", "d3", "d4"
+            )[0]
+
+
     def is_well_formed(self):
         """
         vérifie si un graphe est toujouts "bien formé" ( vérifie la multiplicité, les inputs et outputs, etc.)
@@ -710,6 +972,270 @@ class bool_circ(open_digraph):
                         graph.nodes[main_id].set_label('')
         
         return cls(graph), val
+        
+    def genere_bool_circ(self, n, inputs=1, outputs=1):
+        """
+        n: taille du graphe
+        inputs : nb de inputs souhaités
+        outputs : nb de outputs souhaités
+        Retourne un open_digraph représentant un circuit booléen.
+        """
+        import random as rd
+        from random import choice, randint
+
+        g = open_digraph.random(n,1, DAG=True, loop_free=True)
+
+        tab_nodes = g.get_nodes()
+        for node in tab_nodes:
+            if node.get_parents() == {}:
+                g.add_input_node(node.get_id())
+            if node.get_children() == {}:
+                g.add_output_node(node.get_id())
+        
+        current_inputs = g.get_input_ids()
+
+        tab_ids_possibles = g.get_node_ids()
+        for id in g.get_input_ids():
+            tab_ids_possibles.remove(id)
+        for id in g.get_output_ids():
+            tab_ids_possibles.remove(id)
+        
+        while len(current_inputs) < inputs:
+
+            id = choice(tab_ids_possibles)
+            g.add_input_node(id)
+
+        while len(current_inputs) > inputs:
+
+            a, b = current_inputs.pop(), current_inputs.pop()
+            tab_ids_possibles.append(a)
+            tab_ids_possibles.append(b)
+            op = rd.choice(["&", "|", "^"])
+            new_node = g.add_node(op, {} , {a:1, b:1})
+            g.add_input_node(new_node)
+
+        current_outputs = g.get_output_ids()
+        while len(current_outputs) < outputs:
+
+            id = choice(tab_ids_possibles)
+            g.add_output_node(id)
+
+        while len(current_outputs) > outputs:
+
+            a, b = current_outputs.pop(), current_outputs.pop()
+            tab_ids_possibles.append(a)
+            tab_ids_possibles.append(b)
+            op = rd.choice(["&", "|", "^"])
+            new_node = g.add_node(op, {a:1, b:1}, {} )
+            g.add_output_node(new_node)
+        
+        for node in g.get_nodes():
+            if not node.get_parents():  
+                g.add_input_node(node.get_id())
+            if not node.get_children():  
+                g.add_output_node(node.get_id())
+        
+        for node in g.get_nodes():
+            node_id = node.get_id()
+                
+            ind = node.indegree()
+            oud = node.outdegree()
+            
+            if ind == 1 and oud == 1:
+                node.set_label("~")  
+                
+            elif ind == 1 and oud > 1:
+                node.set_label(" ")
+
+            elif ind > 1 and oud == 1:
+                op = rd.choice(["&", "|", "^"])
+                node.set_label(op)
+                
+            elif ind > 1 and oud > 1:
+                op = rd.choice(["&", "|", "^"])
+                node.set_label(op) 
+                
+                ucp = g.add_node(" ", {}, {})
+                
+                children = list(node.get_children().keys())
+                for child_idd in children:
+                    node_obj = g.get_node_by_id(node_id)    
+                    child_obj = g.get_node_by_id(child_idd) 
+                    ucp_obj = g.get_node_by_id(ucp)         
+                    
+                    g.add_edge(ucp_obj, child_obj)          
+                    g.remove_edge(node_id, child_idd)       
+                g.add_edge(node_obj, ucp_obj)
+
+            elif ind == 0 and oud == 0:
+                g.remove_node_by_id(node.get_id())
+        for i in g.get_nodes() :
+            print("tests soso")
+            print("noeud courant : ")
+            print(i)
+            print("test un parents n'apparait pas dans la liste des parents de l'enfants")
+            enf = g.get_node_by_id(i).get_children()
+            for e in enf :
+                print("enfant e :")
+                print(e)
+                print("parents :")
+                print(g.get_node_by_id(e).get_parents())
+
+        
+        return bool_circ(g)
+	
+
+        
+    def build_addern(self, n):
+        """
+        Construit un circuit Addern qui calcule la somme de deux registres de taille 2^n
+        avec un bit de retenue en entrée.
+        
+        Entrées: 2*2^n bits (deux registres) + 1 bit de retenue
+        Sorties: 2^n bits (somme) + 1 bit de retenue
+        """
+        size = 2**n
+        g = open_digraph.empty()
+
+        input_a_ids = []
+        input_b_ids = []
+        sum_ids = []
+
+        # Retenue initiale (bit d'entrée)
+        carry_node_id = g.add_node("", {},  {})
+        g.add_input_id(carry_node_id)
+        prev_carry_id = carry_node_id
+
+        for i in range(size):
+            # Entrées a_i et b_i
+            a_node_id = g.add_node("",  {},  {})
+            b_node_id = g.add_node("",  {},  {})
+            g.add_input_id(a_node_id)
+            g.add_input_id(b_node_id)
+            input_a_ids.append(a_node_id)
+            input_b_ids.append(b_node_id)
+
+            # XOR1 : a ^ b
+            xor1_id = g.add_node("^", {a_node_id : 1, b_node_id : 1},  {})
+
+            # XOR2 : (a ^ b) ^ c_in
+            xor2_id = g.add_node("^", {xor1_id : 1, prev_carry_id : 1},  {})
+            g.add_output_node(xor2_id)
+            sum_ids.append(xor2_id)
+
+            # Carry : (a & b) | ((a ^ b) & c_in)
+            and1_id = g.add_node("&", {a_node_id : 1, b_node_id : 1},  {})
+            and2_id = g.add_node("&", {xor1_id : 1, prev_carry_id : 1},  {})
+            carry_out_id = g.add_node("|", {and1_id : 1, and2_id : 1},  {})
+
+            prev_carry_id = carry_out_id
+
+        # Dernière retenue
+        g.add_output_node(prev_carry_id) 
+        for no in g.get_nodes():
+            if no.get_label() in ['&', '|', '^'] :
+                if no.outdegree() > 1 :
+                    ucp = g.add_node(' ', {}, {})
+                    node_id = no.get_id()
+                
+                    children = list(no.get_children().keys())
+                    for child_idd in children:
+                        node_obj = g.get_node_by_id(node_id)    
+                        child_obj = g.get_node_by_id(child_idd) 
+                        ucp_obj = g.get_node_by_id(ucp)         
+                        
+                        g.add_edge(ucp_obj, child_obj)          
+                        g.remove_edge(node_id, child_idd)       
+                    g.add_edge(node_obj, ucp_obj)
+
+        return bool_circ(g)
+
+
+    def build_half_addern(self, n):
+        """
+        Construit un circuit Half_Addern qui calcule la somme de deux registres de taille 2^n.
+        
+        Entrées: 2*2^n bits (deux registres)
+        Sorties: 2^n bits (somme) + 1 bit de retenue
+        """
+        size = 2**n
+        g = open_digraph.empty()
+
+        input_a_ids = []
+        input_b_ids = []
+        sum_ids = []
+
+        prev_carry_id = None
+
+        for i in range(size):
+            # 1. Création des nœuds pour a_i et b_i
+            a_node_id = g.add_node(" ", {}, {})
+            b_node_id = g.add_node(" ", {}, {})
+            g.add_input_id(a_node_id)
+            g.add_input_id(b_node_id)
+            input_a_ids.append(a_node_id)
+            input_b_ids.append(b_node_id)
+
+            # 2. XOR intermédiaire : a ^ b
+            xor1_id = g.add_node("^", {a_node_id : 1, b_node_id : 1 }, {})
+
+            # 3. AND pour la retenue intermédiaire : a & b
+            and1_id = g.add_node("&", {a_node_id : 1, b_node_id: 1}, {})
+
+            if i == 0:
+                # Pas de retenue entrante pour le 1er bit
+                sum_id = xor1_id
+                carry_out_id = and1_id
+            else:
+                # 4. XOR final : (a ^ b) ^ prev_carry
+                xor2_id = g.add_node("^", {xor1_id : 1, prev_carry_id: 1}, {})
+                sum_id = xor2_id
+
+                # 5. Nouvelle retenue : (a & b) | ((a ^ b) & prev_carry)
+                and2_id = g.add_node("&", {xor1_id : 1, prev_carry_id : 1}, {})
+                carry_out_id = g.add_node("|", {and1_id : 1, and2_id : 1}, {})
+
+            g.add_output_node(sum_id)
+            sum_ids.append(sum_id)
+            prev_carry_id = carry_out_id
+
+        # 6. Sortie finale : bit de retenue final
+        g.add_output_node(prev_carry_id)
+
+        for no in g.get_nodes():
+            if no.get_label() in ['&', '|', '^'] :
+                if no.outdegree() > 1 :
+                    ucp = g.add_node(' ', {}, {})
+                    node_id = no.get_id()
+                
+                    children = list(no.get_children().keys())
+                    for child_idd in children:
+                        node_obj = g.get_node_by_id(node_id)    
+                        child_obj = g.get_node_by_id(child_idd) 
+                        ucp_obj = g.get_node_by_id(ucp)         
+                        
+                        g.add_edge(ucp_obj, child_obj)          
+                        g.remove_edge(node_id, child_idd)       
+                    g.add_edge(node_obj, ucp_obj)
+
+        for i in g.get_input_ids() :
+            inp = g.get_node_by_id(i)
+            if inp.outdegree() > 1 :
+                ucp = g.add_node(' ', {}, {})
+            
+                children = list(inp.get_children().keys())
+                for child_idd in children:  
+                    child_obj = g.get_node_by_id(child_idd) 
+                    ucp_obj = g.get_node_by_id(ucp)         
+                    
+                    g.add_edge(ucp_obj, child_obj)          
+                    g.remove_edge(i, child_idd)       
+                g.add_edge(inp, ucp_obj)
+
+        return bool_circ(g)
+
+	
+
     def simplify_once(self):
         """
         Applique les méthodes de simplication à tous les noeuds du graphe.

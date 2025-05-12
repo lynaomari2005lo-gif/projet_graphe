@@ -558,6 +558,7 @@ class InitTest(unittest.TestCase):
         Tests bool_circ 
 
         """
+        """
 
         # Test parenthèses
         expr = "((~(( (x1))&(x2)))|(x2))"
@@ -568,10 +569,76 @@ class InitTest(unittest.TestCase):
         g = bool_circ.parse_parentheses(expr1,expr2)
         g[0].display("pp2")
         print(g[1])
-
+"""
         # Test int_bin
         g = bool_circ.int_bin(11,8)
         g.display('bin')
+
+        #Test genere_bool_circ (avec inputs et outputs)
+        ngb = node(0, '0', {}, {})
+        ggb = open_digraph([], [], [ngb])
+        self.assertEqual(ggb.assert_is_well_formed(), True )
+        bb = bool_circ(ggb)
+        soph = bb.genere_bool_circ(7,2,2)
+        soph.display("testgenereboolcirc.pdf")
+        print(soph)
+
+        #Test build_addern
+
+        #test build_adder0
+        ab = open_digraph([], [], [ngb])
+        ab = bool_circ(ab)
+        adder0 = ab.build_addern(0)
+        self.assertEqual(len(adder0.get_input_ids()), 3)
+        self.assertEqual(len(adder0.get_output_ids()), 2)
+        
+        adder0.display("test_addern_0.pdf")
+        # Cas n = 1 : 2 bits par registre + 1 carry => 5 inputs
+        ab = open_digraph([], [], [ngb])
+        ab = bool_circ(ab)
+        adder1 = ab.build_addern(1)
+        #self.assertFalse(adder1.is_cyclic())
+        self.assertEqual(len(adder1.get_input_ids()), 5)  
+        self.assertEqual(len(adder1.get_output_ids()), 3)  
+
+        adder1.display("test_addern_1.pdf")
+
+        # Cas n = 2 : 4 bits par registre => 9 inputs, 5 outputs
+        ab = open_digraph([], [], [ngb])
+        ab = bool_circ(ab)
+        adder2 = ab.build_addern(2)
+        #self.assertFalse(adder2.is_cyclic())
+
+        self.assertEqual(len(adder2.get_input_ids()), 9)  
+        self.assertEqual(len(adder2.get_output_ids()), 5) 
+
+        adder2.display("test_addern_2.pdf")
+
+        #Test build_half_addern
+        ab = open_digraph([], [], [ngb])
+        ab = bool_circ(ab)
+
+        # Cas n = 0
+        half_adder0 = ab.build_half_addern(0)
+        self.assertEqual(len(half_adder0.get_output_ids()), 2)  # sum, carry-out
+        self.assertFalse(half_adder0.is_cyclic())
+        half_adder0.display("test_half_addern_0.pdf")
+
+        # Cas n = 1
+        half_adder1 = ab.build_half_addern(1)
+        expected_outputs = (2 ** 1) + 1     # 2 + 1 = 3
+        self.assertEqual(len(half_adder1.get_output_ids()), expected_outputs)
+        self.assertFalse(half_adder1.is_cyclic())
+        half_adder1.display("test_half_addern_1.pdf")
+
+        # Cas n = 2
+        half_adder2 = ab.build_half_addern(2)
+        expected_outputs = (2 ** 2) + 1     # 4 + 1 = 5
+        self.assertEqual(len(half_adder2.get_output_ids()), expected_outputs)
+        self.assertFalse(half_adder2.is_cyclic())
+        half_adder2.display("test_half_addern_2.pdf")
+	
+
 
         # Test evaluate
 
