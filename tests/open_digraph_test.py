@@ -558,18 +558,17 @@ class InitTest(unittest.TestCase):
         Tests bool_circ 
 
         """
-        """
-
+        
         # Test parenthèses
-        expr = "((~(( (x1))&(x2)))|(x2))"
+        expr = "((~(( (x0))&(x1)))|(x2))"
         circuit = bool_circ.parse_parentheses(expr)
         circuit[0].display("pp")
+        
         expr1 = "(((x0)&((x1)&(x2)))|((x1)&(~(x2))))"
         expr2 = "(((x0)&(~(x1)))|(x2))"
         g = bool_circ.parse_parentheses(expr1,expr2)
         g[0].display("pp2")
-        print(g[1])
-"""
+        
         # Test int_bin
         g = bool_circ.int_bin(11,8)
         g.display('bin')

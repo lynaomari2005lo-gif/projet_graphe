@@ -859,8 +859,8 @@ class bool_circ(open_digraph):
             raise TypeError("L'argument doit être une instance de open_digraph")
         super().__init__(graph.get_input_ids(), graph.get_output_ids(), graph.get_nodes())
         self.graph = graph
-        if not self.is_well_formed_cyclic():
-            raise ValueError("Le circuit booléen n'est pas bien formé.")
+        #if not self.is_well_formed_cyclic():
+        #    raise ValueError("Le circuit booléen n'est pas bien formé.")
 
     def is_well_formed_cyclic(self):
         """
@@ -892,7 +892,7 @@ class bool_circ(open_digraph):
             elif label == '^':
                 if indeg < 2 or outdeg not in [0,1]:
                     return False
-            elif label not in [' ','','0','1','&','|','^','~','res']:
+            elif label not in [' ','0','1','&','|','^','~','res']:
                 return False
         return True
 
@@ -915,7 +915,6 @@ class bool_circ(open_digraph):
     @classmethod
     def parse_parentheses(cls, *args):
         """
-        args: string, chaînes de caractères
         Construit un bool_circ à partir d'une ou plusieurs chaîne de caractères bien parenthésée.
         """
         root = node(0, 'res', {}, {})  
@@ -970,6 +969,8 @@ class bool_circ(open_digraph):
                         graph.fusion_noeuds(main_id, other_id)
                     if graph.nodes[main_id].label not in ['1','0']:
                         graph.nodes[main_id].set_label('')
+        #graph.remove_node_by_id(0)
+        #graph.inputs = input_ids
         
         return cls(graph), val
         
