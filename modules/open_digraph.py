@@ -1129,6 +1129,12 @@ class bool_circ(open_digraph):
 
     @classmethod
     def encodeur(cls):
+        """
+        Crée un circuit booléen représentant un encodeur Hamming (7,4)
+        Arguments : la classe bool_circ
+        Return : Une instance de bool_circ représentant le circuit encodeur Hamming (7,4).
+        """
+         
         g = open_digraph.empty()
 
         b1 = g.add_node(" ", {}, {})
@@ -1164,6 +1170,11 @@ class bool_circ(open_digraph):
 
     @classmethod
     def decodeur(cls):
+        """
+        Crée un circuit booléen représentant un décodeur Hamming (7,4) avec correction d’erreurs.
+        Arguments : la classe bool_circ
+        Return : Une instance de bool_circ représentant le circuit décodeur Hamming (7,4), capable de corriger une erreur.
+        """
         g = open_digraph.empty()
         b1 = g.add_node(" ", {}, {})
         b2 = g.add_node(" ", {}, {})
