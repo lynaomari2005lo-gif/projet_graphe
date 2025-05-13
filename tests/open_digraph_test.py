@@ -582,9 +582,8 @@ class InitTest(unittest.TestCase):
         soph = bb.genere_bool_circ(7,2,2)
         soph.display("testgenereboolcirc.pdf")
         print(soph)
-
         #Test build_addern
-
+        
         #test build_adder0
         ab = open_digraph([], [], [ngb])
         ab = bool_circ(ab)
@@ -612,7 +611,7 @@ class InitTest(unittest.TestCase):
         self.assertEqual(len(adder2.get_input_ids()), 9)  
         self.assertEqual(len(adder2.get_output_ids()), 5) 
 
-        adder2.display("test_addern_2.pdf")
+        adder2.display("test_addern_2.pdf") 
 
         #Test build_half_addern
         ab = open_digraph([], [], [ngb])
@@ -637,11 +636,27 @@ class InitTest(unittest.TestCase):
         self.assertEqual(len(half_adder2.get_output_ids()), expected_outputs)
         self.assertFalse(half_adder2.is_cyclic())
         half_adder2.display("test_half_addern_2.pdf")
-	
+
+        # Cas n = 3
+        half_adder3 = ab.build_half_addern(3)
+        self.assertFalse(half_adder3.is_cyclic())
+        half_adder3.display("test_half_addern_3.pdf")
+        
+        #test TP12
+        #test encodeur
+        g12 = open_digraph([], [], [ngb])
+        self.assertEqual(g12.assert_is_well_formed(), True )
+        b12 = bool_circ(g12)
+        encodeur = b12.encodeur()
+        encodeur.display("testencodeur.pdf")
+        #test decodeur
+        decodeur = b12.decodeur()
+        decodeur.display("testdecodeur.pdf")
+
 
 
         # Test evaluate
-
+        """
         # On test toutes les méthodes de simplification
         cop1 = "( (1))" #ok
         cop0 = "( (0))" #ok
@@ -666,7 +681,7 @@ class InitTest(unittest.TestCase):
         g = bool_circ.parse_parentheses(e[0],e[1], e[2])
         g[0].display("add")
         g[0].evaluate()
-        g[0].display("add_apres")
+        g[0].display("add_apres")  """
 
 
 

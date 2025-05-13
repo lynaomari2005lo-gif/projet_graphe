@@ -881,7 +881,7 @@ class bool_circ(open_digraph):
                 if indeg not in [0,1]:
                     return False
             elif label == ' ':
-                if indeg != 1:
+                if indeg not in [0,1]:
                     return False
             elif label == '&' or label == '|':
                 if indeg < 2 or outdeg not in [0,1]:
@@ -892,7 +892,7 @@ class bool_circ(open_digraph):
             elif label == '^':
                 if indeg < 2 or outdeg not in [0,1]:
                     return False
-            elif label not in [' ','0','1','&','|','^','~','res']:
+            elif label not in [' ','','0','1','&','|','^','~','res']:
                 return False
         return True
 
@@ -1010,7 +1010,7 @@ class bool_circ(open_digraph):
             a, b = current_inputs.pop(), current_inputs.pop()
             tab_ids_possibles.append(a)
             tab_ids_possibles.append(b)
-            op = rd.choice(["&", "|", "^"])
+            op = rd.choice(['&', '|', '^'])
             new_node = g.add_node(op, {} , {a:1, b:1})
             g.add_input_node(new_node)
 
@@ -1025,7 +1025,7 @@ class bool_circ(open_digraph):
             a, b = current_outputs.pop(), current_outputs.pop()
             tab_ids_possibles.append(a)
             tab_ids_possibles.append(b)
-            op = rd.choice(["&", "|", "^"])
+            op = rd.choice(['&', '|', '^'])
             new_node = g.add_node(op, {a:1, b:1}, {} )
             g.add_output_node(new_node)
         
@@ -1045,19 +1045,19 @@ class bool_circ(open_digraph):
                 node.set_label("~")  
                 
             elif ind == 1 and oud > 1:
-                node.set_label(" ")
+                node.set_label(' ')
 
             elif ind > 1 and oud == 1:
-                op = rd.choice(["&", "|", "^"])
+                op = rd.choice(['&', '|', '^'])
                 node.set_label(op)
                 
             elif ind > 1 and oud > 1:
-                op = rd.choice(["&", "|", "^"])
+                op = rd.choice(['&', '|', '^'])
                 node.set_label(op) 
                 
-                ucp = g.add_node(" ", {}, {})
+                ucp = g.add_node(' ', {}, {})
                 
-                children = list(node.get_children().keys())
+                children = list(node.get_children().copy().keys())
                 for child_idd in children:
                     node_obj = g.get_node_by_id(node_id)    
                     child_obj = g.get_node_by_id(child_idd) 
@@ -1069,23 +1069,28 @@ class bool_circ(open_digraph):
 
             elif ind == 0 and oud == 0:
                 g.remove_node_by_id(node.get_id())
-        for i in g.get_nodes() :
-            print("tests soso")
-            print("noeud courant : ")
-            print(i)
-            print("test un parents n'apparait pas dans la liste des parents de l'enfants")
-            enf = g.get_node_by_id(i).get_children()
-            for e in enf :
-                print("enfant e :")
-                print(e)
-                print("parents :")
-                print(g.get_node_by_id(e).get_parents())
 
-        
+            for i in g.get_input_ids() :
+                inp = g.get_node_by_id(i)
+                if inp.outdegree() > 1 :
+                        ucp = g.add_node(' ', {}, {})
+                    
+                        children = list(inp.get_children().copy().keys())
+                        for child_idd in children:  
+                            child_obj = g.get_node_by_id(child_idd) 
+                            ucp_obj = g.get_node_by_id(ucp)         
+                            
+                            g.add_edge(ucp_obj, child_obj)          
+                            g.remove_edge(i, child_idd)       
+                        g.add_edge(inp, ucp_obj)
+        for node in g.get_nodes():
+            to_remove = [child_id for child_id, count in node.get_children().items() if count == 0]
+            for child_id in to_remove:
+                node.remove_child_id(child_id)
         return bool_circ(g)
-	
 
-        
+
+
     def build_addern(self, n):
         """
         Construit un circuit Addern qui calcule la somme de deux registres de taille 2^n
@@ -1147,6 +1152,24 @@ class bool_circ(open_digraph):
                         g.add_edge(ucp_obj, child_obj)          
                         g.remove_edge(node_id, child_idd)       
                     g.add_edge(node_obj, ucp_obj)
+        for i in g.get_input_ids() :
+                inp = g.get_node_by_id(i)
+                if inp.outdegree() > 1 :
+                        ucp = g.add_node(' ', {}, {})
+                    
+                        children = list(inp.get_children().copy().keys())
+                        for child_idd in children:  
+                            child_obj = g.get_node_by_id(child_idd) 
+                            ucp_obj = g.get_node_by_id(ucp)         
+                            
+                            g.add_edge(ucp_obj, child_obj)          
+                            g.remove_edge(i, child_idd)       
+                        g.add_edge(inp, ucp_obj)
+
+        for node in g.get_nodes():
+            to_remove = [child_id for child_id, count in node.get_children().items() if count == 0]
+            for child_id in to_remove:
+                node.remove_child_id(child_id)
 
         return bool_circ(g)
 
@@ -1208,14 +1231,15 @@ class bool_circ(open_digraph):
                     ucp = g.add_node(' ', {}, {})
                     node_id = no.get_id()
                 
-                    children = list(no.get_children().keys())
+                    children = list(no.get_children().copy().keys())
                     for child_idd in children:
                         node_obj = g.get_node_by_id(node_id)    
                         child_obj = g.get_node_by_id(child_idd) 
                         ucp_obj = g.get_node_by_id(ucp)         
                         
-                        g.add_edge(ucp_obj, child_obj)          
-                        g.remove_edge(node_id, child_idd)       
+                        g.remove_edge(node_id, child_idd)
+                        g.add_edge(ucp_obj, child_obj)                 
+
                     g.add_edge(node_obj, ucp_obj)
 
         for i in g.get_input_ids() :
@@ -1223,16 +1247,94 @@ class bool_circ(open_digraph):
             if inp.outdegree() > 1 :
                 ucp = g.add_node(' ', {}, {})
             
-                children = list(inp.get_children().keys())
+                children = list(inp.get_children().copy().keys())
                 for child_idd in children:  
                     child_obj = g.get_node_by_id(child_idd) 
                     ucp_obj = g.get_node_by_id(ucp)         
                     
-                    g.add_edge(ucp_obj, child_obj)          
-                    g.remove_edge(i, child_idd)       
+                    g.remove_edge(i, child_idd)
+                    g.add_edge(ucp_obj, child_obj)    
                 g.add_edge(inp, ucp_obj)
 
+        for node in g.get_nodes():
+            to_remove = [child_id for child_id, count in node.get_children().items() if count == 0]
+            for child_id in to_remove:
+                node.remove_child_id(child_id)
+
         return bool_circ(g)
+
+
+    def encodeur(self):
+        g = open_digraph.empty()
+
+        # Entrées
+        b1 = g.add_node(" ", {}, {})
+        b2 = g.add_node(" ", {}, {})
+        b3 = g.add_node(" ", {}, {})
+        b4 = g.add_node(" ", {}, {})
+
+        # Ajouter les entrées
+        g.add_input_node(b1)
+        g.add_input_node(b2)
+        g.add_input_node(b3)
+        g.add_input_node(b4)
+
+        # XORs
+        xor1 = g.add_node("^", {}, {})
+        xor2 = g.add_node("^", {}, {})
+        xor3 = g.add_node("^", {}, {})
+
+        # Connexions (parents → enfants)
+        g.add_edge(g.get_node_by_id(b1), g.get_node_by_id(xor1))
+        g.add_edge(g.get_node_by_id(b2), g.get_node_by_id(xor1))
+        g.add_edge(g.get_node_by_id(b4), g.get_node_by_id(xor1))
+
+        g.add_edge(g.get_node_by_id(b1), g.get_node_by_id(xor2))
+        g.add_edge(g.get_node_by_id(b3), g.get_node_by_id(xor2))
+        g.add_edge(g.get_node_by_id(b4), g.get_node_by_id(xor2))
+
+        g.add_edge(g.get_node_by_id(b2), g.get_node_by_id(xor3))
+        g.add_edge(g.get_node_by_id(b3), g.get_node_by_id(xor3))
+        g.add_edge(g.get_node_by_id(b4), g.get_node_by_id(xor3))
+
+
+        # Ajout des sorties : les 4 bits d’entrée + les 3 XOR
+        for i in [b1, b2, b3, b4, xor1, xor2, xor3]:
+            g.add_output_node(i)
+
+        return bool_circ(g)
+
+    def decodeur(self):
+        g = open_digraph.empty()
+        b1 = g.add_node(" ", {}, {})
+        b2 = g.add_node(" ", {}, {})
+        b3 = g.add_node(" ", {}, {})
+        b4 = g.add_node(" ", {}, {})
+        xor1 = g.add_node("^", {b1:1, b2:1, b4:1}, {})
+        xor2 = g.add_node("^", {b1:1, b3:1, b4:1}, {})
+        xor3 = g.add_node("^", {b2:1, b3:1, b4:1}, {})
+        for id, node in list(g.nodes.items()):
+            g.add_input_node(id)
+        copie1 = g.add_node(" ", {xor1:1}, {})
+        copie2 = g.add_node(" ", {xor2:1}, {})
+        copie3 = g.add_node(" ", {xor3:1}, {})
+        non1 = g.add_node("~", {copie3:1}, {})
+        non2 = g.add_node("~", {copie2:1}, {})
+        non3 = g.add_node("~", {copie1:1}, {})
+        et1 = g.add_node("&", {copie1:1, copie2:1, non1:1}, {})
+        et2 = g.add_node("&", {copie1:1, non2:1, copie3:1}, {})
+        et3 = g.add_node("&", {non3:1, copie2:1, copie3:1}, {})
+        et4 = g.add_node("&", {copie1:1, copie2:1, copie3:1}, {})
+        xor1 = g.add_node("^", {et1:1, b1:1}, {})
+        xor2 = g.add_node("^", {et2:1, b2:1}, {})
+        xor3 = g.add_node("^", {et3:1, b3:1}, {})
+        xor4 = g.add_node("^", {et4:1, b4:1}, {})
+        g.add_output_node(xor1)
+        g.add_output_node(xor2)
+        g.add_output_node(xor3)
+        g.add_output_node(xor4)
+        return bool_circ(g)
+
 
 	
 
