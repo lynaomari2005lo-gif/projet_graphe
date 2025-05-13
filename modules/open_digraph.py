@@ -185,7 +185,8 @@ class open_digraph(): # for open directed graph
              self.remove_node_by_id(id)
     
     def fusion_noeuds(self, id1, id2, label=None):
-        return """
+        """
+        """
         node1 = self.get_node_by_id(id1)
         node2 = self.get_node_by_id(id2)
         nv_label = ""
@@ -193,12 +194,16 @@ class open_digraph(): # for open directed graph
             nv_label = node1.get_label()
         else:
             nv_label = label
+        e = []
         for parent_id, mult in node2.get_parents().items():
-            self.add_edges(parent_id, id1, mult)
+            for i in range(mult):
+                e.append((parent_id, id1))
         for child_id, mult in node2.get_children().items():
-            self.add_edges(id1, child_id, mult)
+            for i in range(mult):
+                e.append((id1, child_id))
+        self.add_edges(e)
         self.remove_node_by_id(id2)
-        self.get_node_by_id(id1).set_label(nv_label)"""
+        self.get_node_by_id(id1).set_label(nv_label)
     def compose(self, f, g):
         """
         f : open_digraph
@@ -859,8 +864,8 @@ class bool_circ(open_digraph):
             raise TypeError("L'argument doit être une instance de open_digraph")
         super().__init__(graph.get_input_ids(), graph.get_output_ids(), graph.get_nodes())
         self.graph = graph
-        #if not self.is_well_formed_cyclic():
-        #    raise ValueError("Le circuit booléen n'est pas bien formé.")
+        if not self.is_well_formed_cyclic():
+            raise ValueError("Le circuit booléen n'est pas bien formé.")
 
     def is_well_formed_cyclic(self):
         """
@@ -971,7 +976,7 @@ class bool_circ(open_digraph):
                         graph.nodes[main_id].set_label('')
         #graph.remove_node_by_id(0)
         #graph.inputs = input_ids
-        
+        #print(graph.nodes)
         return cls(graph), val
         
     def genere_bool_circ(self, n, inputs=1, outputs=1):

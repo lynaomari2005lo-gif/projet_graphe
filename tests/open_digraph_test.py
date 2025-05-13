@@ -533,10 +533,6 @@ class InitTest(unittest.TestCase):
         g = open_digraph([0, 2], [7], [n1,n2,n3,n4,n5,n6,n7,n8,n9])
         #self.assertEqual(g.assert_is_well_formed(), True)
         #self.assertEqual(g.tri_topologique(), [[n0,n1,n2], [n3,n4], [n5,n6], [n7,n8,n9]])
-        
-        # Test bool
-        #h = bool_circ.parse_parentheses("((x0)&((x1)&(x2)))|((x1)&(~(x2)))")
-        #print(h)
 
         # Test fusion noeud
         n0 = node(0, 'a', {}, {3: 1})
@@ -655,7 +651,7 @@ class InitTest(unittest.TestCase):
 
 
         # Test evaluate
-        """
+        
         # On test toutes les méthodes de simplification
         cop1 = "( (1))" #ok
         cop0 = "( (0))" #ok
@@ -680,7 +676,7 @@ class InitTest(unittest.TestCase):
         g = bool_circ.parse_parentheses(e[0],e[1], e[2])
         g[0].display("add")
         g[0].evaluate()
-        g[0].display("add_apres")  """
+        g[0].display("add_apres") 
 
 
 
