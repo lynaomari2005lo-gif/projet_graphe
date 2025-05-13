@@ -186,6 +186,10 @@ class open_digraph(): # for open directed graph
     
     def fusion_noeuds(self, id1, id2, label=None):
         """
+        id1 : int, id du noeud 1 à fusionner
+        id2 : int, id du noeud 2 à fusionner
+        label : string, nouveau label/ None par défaut prend celui du noeud d'id 1
+        Fonction qui fusionne le noeud d'id 1 et celui d'id 2
         """
         node1 = self.get_node_by_id(id1)
         node2 = self.get_node_by_id(id2)
@@ -1447,7 +1451,7 @@ class bool_circ(open_digraph):
 
         return False
 
-    def evaluate(self):
+    def evaluate_parent(self):
         """
         Applique simplify_once tant que nécessaire
         """
@@ -1571,3 +1575,284 @@ class bool_circ(open_digraph):
             self.rewrite_effacement()
             self.rewrite_propagate_NOT_through_XOR()
             # Ajouter d'autres règles si nécessaires
+
+    #############
+
+
+    # TP12
+
+
+    ##############
+
+    
+    def copies(self, id_log, id_in):
+        '''Arguments: id_log (int), id_in (int).
+        Returns: None.
+        Description: Replaces a logical copy node by a constant (0 or 1) depending on the input node's label.'''
+        if self.nodes[id_in].get_label() == "0":
+            for child in self.nodes[id_log].get_children():
+                self.add_node("0", {}, {child:1})
+        elif self.nodes[id_in].get_label() == "1":
+            for child in self.nodes[id_log].get_children():
+                self.add_node("1", {}, {child:1})
+        else:
+            raise Exception("label != de 0 ou 1")
+        self.remove_node_by_id(id_log)
+        self.remove_node_by_id(id_in)
+
+    def non(self, id_log, id_in):
+        '''Arguments: id_log (int), id_in (int).
+        Returns: None.
+        Description: Computes the NOT of the input node and assigns the result to the logical node.'''
+        if self.nodes[id_in].get_label() == "0":
+            self.nodes[id_log].set_label("1")
+        elif self.nodes[id_in].get_label() == "1":
+            self.nodes[id_log].set_label("0")
+        else:
+            raise Exception("label != de 0 ou 1")
+        self.remove_node_by_id(id_in)
+    
+    def et(self, id_log, id_in):
+        '''Arguments: id_log (int), id_in (int).
+        Returns: None.
+        Description: Applies simplification rules for the AND operation based on the input value.'''
+        if self.nodes[id_in].get_label() == "0":
+            self.nodes[id_log].set_label("0")
+            for parent in list(self.nodes[id_log].get_parents()):
+                self.nodes[parent].set_label("")
+                self.remove_parallel_edges(parent, id_log)
+        elif self.nodes[id_in].get_label() == "1":
+            self.remove_node_by_id(id_in)
+        else:
+            raise Exception("label != de 0 ou 1")
+    
+    def ou(self, id_log, id_in):
+        '''Arguments: id_log (int), id_in (int).
+        Returns: None.
+        Description: Applies simplification rules for the OR operation based on the input value.'''
+        if self.nodes[id_in].get_label() == "1":
+            self.nodes[id_log].set_label("1")
+            for parent in list(self.nodes[id_log].get_parents()):
+                self.nodes[parent].set_label("")
+                self.remove_parallel_edges(parent, id_log)
+        elif self.nodes[id_in].get_label() == "0":
+            self.remove_node_by_id(id_in)
+        else:
+            raise Exception("label != de 0 ou 1")
+
+    def xor(self, id_log, id_in):
+        '''Arguments: id_log (int), id_in (int).
+        Returns: None.
+        Description: Applies simplification rules for the XOR operation based on the input value.'''
+        if self.nodes[id_in].get_label() == "1":
+            self.remove_node_by_id(id_in)
+            new_non = self.add_node("~", {}, self.nodes[id_log].get_children())
+            for child in list(self.nodes[id_log].get_children()):
+                self.remove_parallel_edges(id_log, child)
+            self.add_edge(id_log, new_non)
+        elif self.nodes[id_in].get_label() == "0":
+            self.remove_node_by_id(id_in)
+        else:
+            raise Exception("label != de 0 ou 1")
+
+    def neutres(self, id_log):
+        '''Arguments: id_log (int).
+        Returns: None.
+        Description: Replaces a binary logic node (|, ^, &) with its neutral element.'''
+        if self.nodes[id_log].get_label() in ["|", "^"]:
+            self.nodes[id_log].set_label("0")
+        elif self.nodes[id_log].get_label() == "&":
+            self.nodes[id_log].set_label("1")
+        else:
+            raise Exception("label != de & ou | ou ^")
+
+    def logique(self, id_log, id_in):
+        '''Arguments: id_log (int), id_in (int).
+        Returns: None.
+        Description: Applies logic simplification and evaluation depending on the type of logic gate.'''
+        if self.nodes[id_in].get_label() in ["|", "^", "&"]:
+            self.neutres(id_in)
+        elif self.nodes[id_log].get_label() == "":
+            self.copies(id_log, id_in)
+        elif self.nodes[id_log].get_label() == "~":
+            self.non(id_log, id_in)
+        elif self.nodes[id_log].get_label() == "&":
+            self.et(id_log, id_in)
+        elif self.nodes[id_log].get_label() == "|":
+            self.ou(id_log, id_in)
+        elif self.nodes[id_log].get_label() == "^":
+            self.xor(id_log, id_in)
+        else:
+            raise Exception("label invalide")
+
+    def evaluate(self):
+        '''Arguments: None.
+        Returns: None.
+        Description: Evaluates the circuit by propagating constant values and simplifying logic gates.'''
+        fini = False
+        while not fini:
+            fini = True
+            co_leaf = [id for id, node in self.nodes.items() if not node.parents]
+            for id in co_leaf:
+                for child in list(self.nodes[id].get_children()):
+                    if child not in self.outputs:
+                        fini = False
+                        self.logique(child, id)
+        for id, node in list(self.nodes.items()):
+            if node.get_label() in ["|", "^", "&"]:
+                self.logique(-1, id)
+            if node.get_label() == "":
+                self.remove_node_by_id(id)
+
+    def asso_xor(self, id1, id2):
+        '''Arguments: id1 (int), id2 (int).
+        Returns: None.
+        Description: Merges two XOR nodes with identical labels and propagates connections.'''
+        if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "^":
+            for parent in list(self.nodes[id1].get_parents()):
+                self.add_edge(parent, id2)
+            self.remove_node_by_id(id1)
+        else:
+            raise Exception("erreur label")
+
+    def asso_copie(self, id1, id2):
+        '''Arguments: id1 (int), id2 (int).
+        Returns: None.
+        Description: Merges two copy nodes and forwards connections.'''
+        if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "":
+            for child in list(self.nodes[id2].get_children()):
+                self.add_edge(id1, child)
+            self.remove_node_by_id(id2)
+        else:
+            raise Exception("erreur label")
+
+    def invo_xor(self, id_xor, id_copie):
+        '''Arguments: id_xor (int), id_copie (int).
+        Returns: None.
+        Description: Involutes a XOR node with respect to a copy input, handling multiplicity.'''
+        if self.nodes[id_xor].get_label() == "^" and self.nodes[id_copie].get_label() == "":
+            if self.nodes[id_xor].get_parents()[id_copie] % 2 == 0:
+                self.remove_parallel_edges(id_copie, id_xor)
+            else:
+                self.remove_parallel_edges(id_copie, id_xor)
+                self.add_edge(id_copie, id_xor)
+        else:
+            raise Exception("erreur label")
+
+    def effacement(self, id1, id2):
+        '''Arguments: id1 (int), id2 (int).
+        Returns: None.
+        Description: Deletes a node and a useless copy node that has no children.'''
+        if self.nodes[id2].get_label() == "" and not self.nodes[id2].get_children():
+            for parent in list(self.nodes[id1].get_parents()):
+                self.add_node("", {parent:1}, {})
+            self.remove_node_by_id(id1)
+            self.remove_node_by_id(id2)
+        else:
+            raise Exception("erreur label")
+
+    def non_xor(self, id_non, id_xor):
+        '''Arguments: id_non (int), id_xor (int).
+        Returns: None.
+        Description: Merges a NOT gate and a XOR gate by pushing NOT after the XOR.'''
+        if self.nodes[id_non].get_label() == "~" and self.nodes[id_xor].get_label() == "^":
+            for parent in list(self.nodes[id_non].get_parents()):
+                self.add_edge(parent, id_xor)
+            self.remove_node_by_id(id_non)
+            id_non = self.add_node("~", {}, self.nodes[id_xor].get_children())
+            for child in list(self.nodes[id_xor].get_children()):
+                self.remove_parallel_edges(id_xor, child)
+            self.add_edge(id_xor, id_non)
+        else:
+            raise Exception("erreur label")
+
+    def non_copie(self, id_non, id_copie):
+        '''Arguments: id_non (int), id_copie (int).
+        Returns: None.
+        Description: Pushes NOT gates after copy nodes by duplicating them on the output branches.'''
+        if self.nodes[id_non].get_label() == "~" and self.nodes[id_copie].get_label() == "":
+            for parent in list(self.nodes[id_non].get_parents()):
+                self.add_edge(parent, id_copie)
+            self.remove_node_by_id(id_non)
+            for child in list(self.nodes[id_copie].get_children()):
+                self.add_node("~", {id_copie:1}, {child:1})
+                self.remove_parallel_edges(id_copie, child)
+        else:
+            raise Exception("erreur label")
+
+    def invo_non(self, id1, id2):
+        '''Arguments: id1 (int), id2 (int).
+        Returns: None.
+        Description: Merges two NOT gates into a direct connection (double negation removal).'''
+        if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "~":
+            for parent in list(self.nodes[id1].get_parents()):
+                for child in list(self.nodes[id2].get_children()):
+                    self.add_edge(parent, child)
+            self.remove_node_by_id(id1)
+            self.remove_node_by_id(id2)
+        else:
+            raise Exception("erreur label")
+
+    def reecrit(self, id1, id2):
+        '''Arguments: id1 (int), id2 (int).
+        Returns: bool.
+        Description: Applies one rewrite rule depending on node labels and structure. Returns True if rewritten.'''
+        if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "^":
+            self.asso_xor(id1, id2)
+        elif self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "":
+            self.asso_copie(id1, id2)
+        elif self.nodes[id2].get_label() == "^" and self.nodes[id1].get_label() == "":
+            if self.nodes[id2].get_parents()[id1] <2:
+                return False
+            self.invo_xor(id2, id1)
+        elif self.nodes[id2].get_label() == "" and not self.nodes[id2].get_children():
+            self.effacement(id1, id2)
+        elif self.nodes[id1].get_label() == "~" and self.nodes[id2].get_label() == "^":
+            self.non_xor(id1, id2)
+        elif self.nodes[id1].get_label() == "~" and self.nodes[id2].get_label() == "":
+            self.non_copie(id1, id2)
+        elif self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "~":
+            self.invo_non(id1, id2)
+        else:
+            return False
+        return True
+
+    def simplifie(self):
+        '''Arguments: None.
+        Returns: None.
+        Description: Repeatedly applies rewrite rules to simplify the boolean circuit.'''
+        modifie = False
+        for id, node in list(self.nodes.items()):
+            if id not in self.nodes:
+                continue
+            for id2 in list(self.nodes[id].get_children()):
+                if id2 not in self.nodes or id == id2 or id not in self.nodes:
+                    continue
+                if self.reecrit(id, id2):
+                    modifie = True
+        if modifie:
+            self.simplifie()
+
+    def simplifie_evaluate(self):
+        '''Arguments: None.
+        Returns: None.
+        Description: Performs a simplified evaluation by combining logic evaluation and structural simplification.'''
+        self.simplifie()
+        fini = False
+        while not fini:
+            fini = True
+            co_leaf = [id for id, node in self.nodes.items() if not node.parents]
+            for id in co_leaf:
+                if id in self.nodes:
+                    for child in list(self.nodes[id].get_children()):
+                        if child not in self.outputs:
+                            fini = False
+                            self.logique(child, id)
+                            self.simplifie()
+        for id, node in list(self.nodes.items()):
+            if node.get_label() in ["|", "^", "&"]:
+                self.logique(-1, id)
+            if id not in self.outputs:
+                if not node.get_children():
+                    self.remove_node_by_id(id)
+

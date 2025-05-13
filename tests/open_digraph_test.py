@@ -666,7 +666,7 @@ class InitTest(unittest.TestCase):
         
         g = bool_circ.parse_parentheses(cop1,cop0,non1,non0,et1,et0,ou1,ou0,xor1,xor0)
         g[0].display("avant_simply")
-        g[0].evaluate()
+        g[0].evaluate_parent()
         g[0].display("apres_simply")
         
         # Test additionneur : On fait les calculs pour avoir le résultat final dans le noeud parent du noeud res
@@ -675,7 +675,7 @@ class InitTest(unittest.TestCase):
         # Test sur les entiers 111 et 011 et 001 , res = 001
         g = bool_circ.parse_parentheses(e[0],e[1], e[2])
         g[0].display("add")
-        g[0].evaluate()
+        g[0].evaluate_parent()
         g[0].display("add_apres") 
 
 
