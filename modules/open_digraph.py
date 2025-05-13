@@ -1,7 +1,8 @@
 from random import *
 from modules.nodes import node
+from modules.mixins.compositions_mx import OpenDigraphCompositionsMixin
 
-class open_digraph(): # for open directed graph
+class open_digraph(OpenDigraphCompositionsMixin): # for open directed graph
     def __init__(self, inputs, outputs, nodes):
         """
         inputs : int list ; the ids of the input nodes
@@ -55,7 +56,6 @@ class open_digraph(): # for open directed graph
         self.inputs.append(idi)
     def add_output_id(self,ido):
         self.outputs.append(ido)
-        # mixins/compositions_mx.py
 
     def copy(self):
         """
@@ -70,262 +70,6 @@ class open_digraph(): # for open directed graph
             new_dico[n] = dico[n].copy()
         d.nodes = new_dico
         return d
-
-    def new_id(self):
-        """
-        renvoie un id non utilisé dans le graphe
-        """
-        id_n = self.get_node_ids()
-        next_id = 0
-        while next_id in id_n:
-            next_id += 1
-        return next_id
-
-    def add_edge(self, src, tgt):
-        """
-        src : node ; noeud source
-        tgt : node ; noeud target
-        rajoute une arrête du noeud d'id src au noeud d'id tgt
-        """
-        src.add_child_id(tgt.get_id())
-        tgt.add_parent_id(src.get_id())
-
-    def add_edges(self, edges):
-        """
-        edges : int tuple list; liste de paires d'id
-        rajoute une arrête entre chacune des paires
-        """
-        for (src, tgt) in edges:
-            self.nodes[src].add_child_id(tgt)
-            self.nodes[tgt].add_parent_id(src)
-
-    def add_node(self, label = "", parents = None, children = None):
-        """
-        label : string ; label du noeud, rien par défaut
-        parents : int dict; noeuds du parent
-        children : int dict; noeud de l'enfant
-        rajoute un noeud au graphe et le lie avec les noeuds d'ids parents et children.
-        Si None : attribue un dictionnaire vide.
-        renvoie l'id du nouveau noeud
-        """
-        if parents is None:
-            parents = {}
-        if children is None:
-            children = {}
-        new_id = self.new_id()
-        new_node = node(new_id, label, parents, children)
-        self.nodes[new_id] = new_node
-
-        for parent_id, mul in parents.items():
-            if parent_id in self.nodes:
-                parent_node = self.nodes[parent_id]
-                for i in range(mul):
-                    parent_node.add_child_id(new_id)
-
-        for child_id, mul in children.items():
-            if child_id in self.nodes:
-                child_node = self.nodes[child_id]
-                for j in range(mul):
-                    child_node.add_parent_id(new_id)
-        return new_id
-
-    def remove_edge(self,src,tgt):
-        """
-        src : int ; id du noeud source
-        tgt : int ; id du noeud target
-        retire une arrête entre le noeud source et le noeud target
-        """
-        s = self.get_node_by_id(src)
-        t = self.get_node_by_id(tgt)
-        s.remove_child_once(tgt)
-        t.remove_parent_once(src)
-    def remove_parallel_edges(self,src,tgt):
-        """
-        src : int ; id du noeud source
-        tgt : int ; id du noeud target
-        retire toutes les arrêtes entre le noeud source et le noeud target
-        """
-        s = self.get_node_by_id(src)
-        t = self.get_node_by_id(tgt)
-        s.remove_child_id(tgt)
-        t.remove_parent_id(src)
-    def remove_node_by_id(self,n):
-        """
-        n : int ; id du noeud à supprimer
-        supprime le noeud d'id n dans le graphe
-        """
-        for nd in self.nodes :
-            snd = self.get_node_by_id(nd)
-            if n in snd.get_children():
-                self.remove_parallel_edges(nd,n)
-            if n in snd.get_parents():
-                self.remove_parallel_edges(n,nd)
-        self.nodes.pop(n)
-    def remove_edges(self,liste):
-        """
-        liste : (int*int) list; liste de paires (src,tgt)
-        retire une arrête entre toutes les paires (src,tgt)
-        """
-        for src_id,tgt_id in liste:
-            self.remove_edge(src_id,tgt_id)
-    def remove_several_parallel_edges(self,liste):
-        """
-        liste : (int*int) list; liste de paires (src,tgt)
-        retire toutes les arrêtes entre toutes les paires (src,tgt)
-        """
-        for src_id,tgt_id in liste:
-            self.remove_parallel_edges(src_id,tgt_id)
-
-    def remove_nodes_by_id(self,liste):
-        """
-        liste : (int) list; liste de id des noeuds à supprimer
-        supprime les noeuds du graphe dont l'id est dans la liste
-        """
-        for id in liste:
-             self.remove_node_by_id(id)
-    
-    def fusion_noeuds(self, id1, id2, label=None):
-        """
-        id1 : int, id du noeud 1 à fusionner
-        id2 : int, id du noeud 2 à fusionner
-        label : string, nouveau label/ None par défaut prend celui du noeud d'id 1
-        Fonction qui fusionne le noeud d'id 1 et celui d'id 2
-        """
-        node1 = self.get_node_by_id(id1)
-        node2 = self.get_node_by_id(id2)
-        nv_label = ""
-        if label == None:
-            nv_label = node1.get_label()
-        else:
-            nv_label = label
-        e = []
-        for parent_id, mult in node2.get_parents().items():
-            for i in range(mult):
-                e.append((parent_id, id1))
-        for child_id, mult in node2.get_children().items():
-            for i in range(mult):
-                e.append((id1, child_id))
-        self.add_edges(e)
-        self.remove_node_by_id(id2)
-        self.get_node_by_id(id1).set_label(nv_label)
-    def compose(self, f, g):
-        """
-        f : open_digraph
-        g : open_digraph
-        méthode qui renvoie un nouveau graphe qui est la composition en séquence de f et g (sans modifier ces derniers)
-        """
-        ff = f.copy()
-        ff.icompose(g)
-        return ff
-    def icompose(self, f):
-        """
-        g : open_digraph 
-        méthode qui ajoute g à self avec un composition en séquence ( g n'est pas modifié) 
-        """
-        ff = f.copy()
-        out_ff = ff.get_output_ids()
-        inp_self = self.get_input_ids()
-        if len(out_ff) != len(inp_self) :
-            raise Exception("le nombre d'entrées du graphe ne coïncident pas avec le nombre de sorties du graphe donné en paramètre")
-        else :
-            nodes_self = self.get_nodes()
-            n = len(nodes_self)
-            ff.shift_indices(n)
-            nodes_gg = ff.get_nodes()
-            self.nodes.update(ff.get_nodes_dico())
-            out_ff = ff.get_output_ids()
-            for i in range(len(out_ff)) :
-                self.add_edge(self.nodes[out_ff[i]],self.nodes[inp_self[i]])
-            self.inputs = ff.get_input_ids()
-    def shift_indices(self, n):
-        """
-        n : int, valeur à ajouter aux indices
-        ajoute n à tous les indices du graphe, n peut être négatif
-        """
-        new_nodes = {}
-        for node_id, node in self.nodes.items():
-            new_id = node_id + n
-            new_node = node.copy()
-            new_node.set_id(new_id)
-            new_node.set_parents({k + n: v for k, v in node.parents.items()})
-            new_node.set_children({k + n: v for k, v in node.children.items()})
-            new_nodes[new_id] = new_node
-        self.nodes = new_nodes
-        self.inputs = [i + n for i in self.inputs]
-        self.outputs = [o + n for o in self.outputs]   
-    def iparallel(self, g):
-        """
-        g : open_digraph 
-        méthode qui ajoute g à self avec un composition en parallèle ( g n'est pas modifié) 
-        """
-        gg = g.copy()
-        nodes_self = self.get_nodes()
-        n = len(nodes_self)
-        gg.shift_indices(n)
-        nodes_gg = gg.get_nodes()
-        if nodes_self == []:
-            self.nodes = gg.get_nodes_dico()
-        elif nodes_gg == [] :
-            nodes_self = nodes_self
-        else :
-            self.nodes.update(gg.get_nodes_dico())
-            self.add_edge(nodes_self[0], nodes_gg [0])
-
-    def parallel(self,f, g):
-        """
-        f : open_digraph
-        g : open_digraph
-        méthode qui renvoie un nouveau graphe qui est la composition en parallèle de f et g (sans modifier ces derniers)
-        """
-        ff = f.copy()
-        ff.iparallel(g)
-        return ff
-    @classmethod
-    def identity(cls, n):
-        """
-        n : int ; nombre de fils
-        Crée un open_digraph représentant l'identité sur n fils.
-        """
-        from modules.open_digraph import open_digraph  # Import local
-        inputs = []
-        outputs = []
-        for i in range(n):
-            inputs.append(i)
-            outputs.append(n + i)
-        nodes = []
-        for i in range(n):
-            nodes.append(node(i, str(i), {}, {n+i : 1}))
-        for i in range(n):
-            nodes.append(node(n+i, str(n+i), {i : 1}, {}))
-        return open_digraph(inputs, outputs, nodes)
-    @classmethod
-    def hamming_encoder(cls):
-        """
-        Encodeur Hamming (7,4) : construit un circuit booléen qui prend 4 bits et en génère 7
-        en ajoutant 3 bits de parité.
-        """
-        return cls.parse_parentheses(
-            "((d1^d2)^d4)",  # p1 = d1 ⊕ d2 ⊕ d4
-            "((d1^d3)^d4)",  # p2 = d1 ⊕ d3 ⊕ d4
-            "((d2^d3)^d4)",  # p3 = d2 ⊕ d3 ⊕ d4
-            "d1", "d2", "d3", "d4"  # données inchangées dans la sortie
-            )[0]  # [0] pour récupérer le bool_circ (pas la liste des variables)
-
-    @classmethod
-    def hamming_decoder(cls):
-        """
-        Décodeur Hamming (7,4) : construit un circuit booléen qui corrige 1 erreur et retrouve les bits d’origine.
-        Cette version suppose qu'on corrige les erreurs avec les XOR des bits de contrôle.
-        """
-        return cls.parse_parentheses(
-            # Syndrome bits (simplifiés à 3 XOR comme dans le graphe)
-            "((p1^(d1^d2))^d4)",  # s1
-            "((p2^(d1^d3))^d4)",  # s2
-            "((p3^(d2^d3))^d4)",  # s3
-            # Les bits de données sont transmis tels quels (décodés après correction dans une version complète)
-            "d1", "d2", "d3", "d4"
-            )[0]
-
 
     def is_well_formed(self):
         """
@@ -1273,81 +1017,6 @@ class bool_circ(open_digraph):
 
         return bool_circ(g)
 
-
-    def encodeur(self):
-        g = open_digraph.empty()
-
-        # Entrées
-        b1 = g.add_node(" ", {}, {})
-        b2 = g.add_node(" ", {}, {})
-        b3 = g.add_node(" ", {}, {})
-        b4 = g.add_node(" ", {}, {})
-
-        # Ajouter les entrées
-        g.add_input_node(b1)
-        g.add_input_node(b2)
-        g.add_input_node(b3)
-        g.add_input_node(b4)
-
-        # XORs
-        xor1 = g.add_node("^", {}, {})
-        xor2 = g.add_node("^", {}, {})
-        xor3 = g.add_node("^", {}, {})
-
-        # Connexions (parents → enfants)
-        g.add_edge(g.get_node_by_id(b1), g.get_node_by_id(xor1))
-        g.add_edge(g.get_node_by_id(b2), g.get_node_by_id(xor1))
-        g.add_edge(g.get_node_by_id(b4), g.get_node_by_id(xor1))
-
-        g.add_edge(g.get_node_by_id(b1), g.get_node_by_id(xor2))
-        g.add_edge(g.get_node_by_id(b3), g.get_node_by_id(xor2))
-        g.add_edge(g.get_node_by_id(b4), g.get_node_by_id(xor2))
-
-        g.add_edge(g.get_node_by_id(b2), g.get_node_by_id(xor3))
-        g.add_edge(g.get_node_by_id(b3), g.get_node_by_id(xor3))
-        g.add_edge(g.get_node_by_id(b4), g.get_node_by_id(xor3))
-
-
-        # Ajout des sorties : les 4 bits d’entrée + les 3 XOR
-        for i in [b1, b2, b3, b4, xor1, xor2, xor3]:
-            g.add_output_node(i)
-
-        return bool_circ(g)
-
-    def decodeur(self):
-        g = open_digraph.empty()
-        b1 = g.add_node(" ", {}, {})
-        b2 = g.add_node(" ", {}, {})
-        b3 = g.add_node(" ", {}, {})
-        b4 = g.add_node(" ", {}, {})
-        xor1 = g.add_node("^", {b1:1, b2:1, b4:1}, {})
-        xor2 = g.add_node("^", {b1:1, b3:1, b4:1}, {})
-        xor3 = g.add_node("^", {b2:1, b3:1, b4:1}, {})
-        for id, node in list(g.nodes.items()):
-            g.add_input_node(id)
-        copie1 = g.add_node(" ", {xor1:1}, {})
-        copie2 = g.add_node(" ", {xor2:1}, {})
-        copie3 = g.add_node(" ", {xor3:1}, {})
-        non1 = g.add_node("~", {copie3:1}, {})
-        non2 = g.add_node("~", {copie2:1}, {})
-        non3 = g.add_node("~", {copie1:1}, {})
-        et1 = g.add_node("&", {copie1:1, copie2:1, non1:1}, {})
-        et2 = g.add_node("&", {copie1:1, non2:1, copie3:1}, {})
-        et3 = g.add_node("&", {non3:1, copie2:1, copie3:1}, {})
-        et4 = g.add_node("&", {copie1:1, copie2:1, copie3:1}, {})
-        xor1 = g.add_node("^", {et1:1, b1:1}, {})
-        xor2 = g.add_node("^", {et2:1, b2:1}, {})
-        xor3 = g.add_node("^", {et3:1, b3:1}, {})
-        xor4 = g.add_node("^", {et4:1, b4:1}, {})
-        g.add_output_node(xor1)
-        g.add_output_node(xor2)
-        g.add_output_node(xor3)
-        g.add_output_node(xor4)
-        return bool_circ(g)
-
-
-	
-
     def simplify_once(self):
         """
         Applique les méthodes de simplication à tous les noeuds du graphe.
@@ -1457,138 +1126,79 @@ class bool_circ(open_digraph):
         """
         while self.simplify_once():
             pass
-    @classmethod
-    def encoder(cls):
-        return cls.parse_parentheses(
-            "((d1^d2)^d4)((d1^d3)^d4)((d2^d3)^d4)d1d2d3d4"
-        )[0]
 
-    @classmethod
-    def decoder(cls):
-        """
-        Construit le décodeur du code de Hamming (7,4).
-        Cette version reprend les recalculs de parité et tous les bits reçus.
-        """
-        expr = (
-            "(((r1^r3)^r5)^r7)"
-            "(((r2^r3)^r6)^r7)"
-            "(((r4^r5)^r6)^r7)"
-            "r1r2r3r4r5r6r7"
-        )
-        return cls.parse_parentheses(expr)[0]
     
-    def compose_with(self, other):
-        """
-        Compose ce circuit avec un autre (self ∘ other).
-        Relie les sorties de `other` aux entrées de `self`.
-        """
-        if len(self.get_input_ids()) != len(other.get_output_ids()):
-            raise ValueError("Les sorties de 'other' doivent correspondre aux entrées de 'self'.")
+    def encodeur(self):
+        g = open_digraph.empty()
 
-        # Fusionner les noeuds des deux circuits
-        new_nodes = {**other.get_nodes_dict(), **self.get_nodes_dict()}
+        b1 = g.add_node(" ", {}, {})
+        b2 = g.add_node(" ", {}, {})
+        b3 = g.add_node(" ", {}, {})
+        b4 = g.add_node(" ", {}, {})
 
-        # Création du graphe composé
-        composed = open_digraph(
-            inputs=other.get_input_ids(),
-            outputs=self.get_output_ids(),
-            nodes=list(new_nodes.values())
-        )
+        g.add_input_node(b1)
+        g.add_input_node(b2)
+        g.add_input_node(b3)
+        g.add_input_node(b4)
 
-        # Connecter les sorties de other aux entrées de self
-        for self_in, other_out in zip(self.get_input_ids(), other.get_output_ids()):
-            composed.add_edge(other_out, self_in)
+        xor1 = g.add_node("^", {}, {})
+        xor2 = g.add_node("^", {}, {})
+        xor3 = g.add_node("^", {}, {})
 
-        return bool_circ(composed)
+        g.add_edge(g.get_node_by_id(b1), g.get_node_by_id(xor1))
+        g.add_edge(g.get_node_by_id(b2), g.get_node_by_id(xor1))
+        g.add_edge(g.get_node_by_id(b4), g.get_node_by_id(xor1))
 
-    def rewrite_involution_NOT(self):
-        """
-        Applique la règle ~~x = x (involution de la porte NON).
-        Supprime les doubles NOT consécutifs.
-        """
-        for node in list(self.get_nodes()):
-            if node.get_label() == '~~':
-                children = list(node.children)
-                if len(children) == 1:
-                    child = self.get_node_by_id(children[0])
-                    if child.get_label() == '~~' and len(child.children) == 1:
-                        grandchild_id = list(child.children)[0]
-                        for parent_id in list(node.parents):
-                            self.add_edge(parent_id, grandchild_id)
-                        self.remove_node_by_id(node.id)
-                        self.remove_node_by_id(child.id)
-    def rewrite_involution_NOT(self):
-        """Applique la règle ~~x = x."""
-        for node in list(self.get_nodes()):
-            if node.get_label() == '~~':
-                children = list(node.children)
-                if len(children) == 1:
-                    child = self.get_node_by_id(children[0])
-                    if child.get_label() == '~~' and len(child.children) == 1:
-                        grandchild_id = list(child.children)[0]
-                        for parent_id in list(node.parents):
-                            self.add_edge(parent_id, grandchild_id)
-                        self.remove_node_by_id(node.id)
-                        self.remove_node_by_id(child.id)
+        g.add_edge(g.get_node_by_id(b1), g.get_node_by_id(xor2))
+        g.add_edge(g.get_node_by_id(b3), g.get_node_by_id(xor2))
+        g.add_edge(g.get_node_by_id(b4), g.get_node_by_id(xor2))
 
-    def rewrite_effacement(self):
-        """Supprime les opérations dont tous les parents ont la même entrée."""
-        for node in list(self.get_nodes()):
-            if node.indegree() > 1:
-                labels = [self.get_node_by_id(p).get_label() for p in node.parents]
-                if all(lab == labels[0] for lab in labels):
-                    for p in node.parents:
-                        for c in node.children:
-                            self.add_edge(p, c)
-                    self.remove_node_by_id(node.id)
+        g.add_edge(g.get_node_by_id(b2), g.get_node_by_id(xor3))
+        g.add_edge(g.get_node_by_id(b3), g.get_node_by_id(xor3))
+        g.add_edge(g.get_node_by_id(b4), g.get_node_by_id(xor3))
 
-    def rewrite_associativity_XOR(self):
-        """Regroupe les XOR en les associant (pas d'effet fonctionnel, utile pour simplification)."""
-        for node in self.get_nodes():
-            if node.get_label() == '^' and node.indegree() == 2:
-                a, b = node.parents
-                n1, n2 = self.get_node_by_id(a), self.get_node_by_id(b)
-                if n1.get_label() == '^' or n2.get_label() == '^':
-                    # Pas une vraie réécriture ici, on pourrait restructurer
-                    pass  # Placeholder
+        for i in [b1, b2, b3, b4, xor1, xor2, xor3]:
+            g.add_output_node(i)
 
-    def rewrite_propagate_NOT_through_XOR(self):
-        """Applique la règle : ~~(a ^ b) = ~~a ^ b = a ^ ~~b"""
-        for node in list(self.get_nodes()):
-            if node.get_label() == '~~':
-                child_id = list(node.children)[0]
-                child = self.get_node_by_id(child_id)
-                if child.get_label() == '^':
-                    # Duplique le NOT sur les entrées
-                    for parent_id in list(child.parents):
-                        p = self.get_node_by_id(parent_id)
-                        not_node = node(self.new_id(), '~~', {p.id: 1}, {})
-                        self.add_node(not_node)
-                        child.replace_parent(p.id, not_node.id)
+        return bool_circ(g)
 
-    def rewrite_all(self):
-        """Applique toutes les règles jusqu'à stabilisation."""
-        prev = None
-        while str(prev) != str(self):
-            prev = self.copy()
-            self.rewrite_involution_NOT()
-            self.rewrite_effacement()
-            self.rewrite_propagate_NOT_through_XOR()
-            # Ajouter d'autres règles si nécessaires
-
-    #############
-
-
-    # TP12
-
-
-    ##############
-
+    def decodeur(self):
+        g = open_digraph.empty()
+        b1 = g.add_node(" ", {}, {})
+        b2 = g.add_node(" ", {}, {})
+        b3 = g.add_node(" ", {}, {})
+        b4 = g.add_node(" ", {}, {})
+        xor1 = g.add_node("^", {b1:1, b2:1, b4:1}, {})
+        xor2 = g.add_node("^", {b1:1, b3:1, b4:1}, {})
+        xor3 = g.add_node("^", {b2:1, b3:1, b4:1}, {})
+        for id, node in list(g.nodes.items()):
+            g.add_input_node(id)
+        copie1 = g.add_node(" ", {xor1:1}, {})
+        copie2 = g.add_node(" ", {xor2:1}, {})
+        copie3 = g.add_node(" ", {xor3:1}, {})
+        non1 = g.add_node("~", {copie3:1}, {})
+        non2 = g.add_node("~", {copie2:1}, {})
+        non3 = g.add_node("~", {copie1:1}, {})
+        et1 = g.add_node("&", {copie1:1, copie2:1, non1:1}, {})
+        et2 = g.add_node("&", {copie1:1, non2:1, copie3:1}, {})
+        et3 = g.add_node("&", {non3:1, copie2:1, copie3:1}, {})
+        et4 = g.add_node("&", {copie1:1, copie2:1, copie3:1}, {})
+        xor1 = g.add_node("^", {et1:1, b1:1}, {})
+        xor2 = g.add_node("^", {et2:1, b2:1}, {})
+        xor3 = g.add_node("^", {et3:1, b3:1}, {})
+        xor4 = g.add_node("^", {et4:1, b4:1}, {})
+        g.add_output_node(xor1)
+        g.add_output_node(xor2)
+        g.add_output_node(xor3)
+        g.add_output_node(xor4)
+        return bool_circ(g)
     
     def copies(self, id_log, id_in):
-        '''Arguments: id_log (int), id_in (int).
+        """
+        Remplacer un nœud de copie logique par 0 ou 1 en fonction de l'étiquette du noeud d'entrée
+        Arguments: id_log (int), id_in (int).
         Returns: None.
-        Description: Replaces a logical copy node by a constant (0 or 1) depending on the input node's label.'''
+        """
         if self.nodes[id_in].get_label() == "0":
             for child in self.nodes[id_log].get_children():
                 self.add_node("0", {}, {child:1})
@@ -1601,9 +1211,11 @@ class bool_circ(open_digraph):
         self.remove_node_by_id(id_in)
 
     def non(self, id_log, id_in):
-        '''Arguments: id_log (int), id_in (int).
+        """
+        Calcule le NOT du nœud d'entrée et attribue le résultat au noeud logique.
+        Arguments: id_log (int), id_in (int).
         Returns: None.
-        Description: Computes the NOT of the input node and assigns the result to the logical node.'''
+        """
         if self.nodes[id_in].get_label() == "0":
             self.nodes[id_log].set_label("1")
         elif self.nodes[id_in].get_label() == "1":
@@ -1613,9 +1225,11 @@ class bool_circ(open_digraph):
         self.remove_node_by_id(id_in)
     
     def et(self, id_log, id_in):
-        '''Arguments: id_log (int), id_in (int).
+        """
+        Applique des règles de simplification pour l'opération ET en fonction de la valeur d'entrée.
+        Arguments: id_log (int), id_in (int).
         Returns: None.
-        Description: Applies simplification rules for the AND operation based on the input value.'''
+        """
         if self.nodes[id_in].get_label() == "0":
             self.nodes[id_log].set_label("0")
             for parent in list(self.nodes[id_log].get_parents()):
@@ -1627,9 +1241,11 @@ class bool_circ(open_digraph):
             raise Exception("label != de 0 ou 1")
     
     def ou(self, id_log, id_in):
-        '''Arguments: id_log (int), id_in (int).
-        Returns: None.
-        Description: Applies simplification rules for the OR operation based on the input value.'''
+        """
+        Applique des règles de simplification pour l'opération OU en fonction de la valeur d'entrée.
+        Arguments: id_log (int), id_in (int)
+        Returns: None
+        """
         if self.nodes[id_in].get_label() == "1":
             self.nodes[id_log].set_label("1")
             for parent in list(self.nodes[id_log].get_parents()):
@@ -1641,9 +1257,11 @@ class bool_circ(open_digraph):
             raise Exception("label != de 0 ou 1")
 
     def xor(self, id_log, id_in):
-        '''Arguments: id_log (int), id_in (int).
+        """
+        Applique des règles de simplification pour l'opération XOR en fonction de la valeur d'entrée.
+        Arguments: id_log (int), id_in (int).
         Returns: None.
-        Description: Applies simplification rules for the XOR operation based on the input value.'''
+        """
         if self.nodes[id_in].get_label() == "1":
             self.remove_node_by_id(id_in)
             new_non = self.add_node("~", {}, self.nodes[id_log].get_children())
@@ -1656,9 +1274,11 @@ class bool_circ(open_digraph):
             raise Exception("label != de 0 ou 1")
 
     def neutres(self, id_log):
-        '''Arguments: id_log (int).
+        """
+        Remplace un nœud logique binaire (|, ^, &) par son élément neutre.
+        Arguments: id_log (int).
         Returns: None.
-        Description: Replaces a binary logic node (|, ^, &) with its neutral element.'''
+        """
         if self.nodes[id_log].get_label() in ["|", "^"]:
             self.nodes[id_log].set_label("0")
         elif self.nodes[id_log].get_label() == "&":
@@ -1667,9 +1287,11 @@ class bool_circ(open_digraph):
             raise Exception("label != de & ou | ou ^")
 
     def logique(self, id_log, id_in):
-        '''Arguments: id_log (int), id_in (int).
+        """
+        Applique la simplification et l'évaluation logiques en fonction du type de porte logique.
+        Arguments: id_log (int), id_in (int).
         Returns: None.
-        Description: Applies logic simplification and evaluation depending on the type of logic gate.'''
+        """
         if self.nodes[id_in].get_label() in ["|", "^", "&"]:
             self.neutres(id_in)
         elif self.nodes[id_log].get_label() == "":
@@ -1686,9 +1308,11 @@ class bool_circ(open_digraph):
             raise Exception("label invalide")
 
     def evaluate(self):
-        '''Arguments: None.
-        Returns: None.
-        Description: Evaluates the circuit by propagating constant values and simplifying logic gates.'''
+        """
+        Évalue le circuit en propageant des valeurs constantes et en simplifiant les portes logiques.
+        Arguments: None
+        Returns: None
+        """
         fini = False
         while not fini:
             fini = True
@@ -1705,9 +1329,11 @@ class bool_circ(open_digraph):
                 self.remove_node_by_id(id)
 
     def asso_xor(self, id1, id2):
-        '''Arguments: id1 (int), id2 (int).
+        """
+        Fusionne deux nœuds XOR avec des étiquettes identiques et propage les connexions.
+        Arguments: id1 (int), id2 (int).
         Returns: None.
-        Description: Merges two XOR nodes with identical labels and propagates connections.'''
+        """
         if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "^":
             for parent in list(self.nodes[id1].get_parents()):
                 self.add_edge(parent, id2)
@@ -1716,9 +1342,11 @@ class bool_circ(open_digraph):
             raise Exception("erreur label")
 
     def asso_copie(self, id1, id2):
-        '''Arguments: id1 (int), id2 (int).
-        Returns: None.
-        Description: Merges two copy nodes and forwards connections.'''
+        """
+        Fusionne deux nœuds de copie et transmet les connexions.
+        Arguments: id1 (int), id2 (int)
+        Returns: None
+        """
         if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "":
             for child in list(self.nodes[id2].get_children()):
                 self.add_edge(id1, child)
@@ -1727,9 +1355,11 @@ class bool_circ(open_digraph):
             raise Exception("erreur label")
 
     def invo_xor(self, id_xor, id_copie):
-        '''Arguments: id_xor (int), id_copie (int).
+        """
+        Involue un nœud XOR par rapport à une entrée de copie, gérant la multiplicité.
+        Arguments: id_xor (int), id_copie (int).
         Returns: None.
-        Description: Involutes a XOR node with respect to a copy input, handling multiplicity.'''
+        """
         if self.nodes[id_xor].get_label() == "^" and self.nodes[id_copie].get_label() == "":
             if self.nodes[id_xor].get_parents()[id_copie] % 2 == 0:
                 self.remove_parallel_edges(id_copie, id_xor)
@@ -1740,9 +1370,11 @@ class bool_circ(open_digraph):
             raise Exception("erreur label")
 
     def effacement(self, id1, id2):
-        '''Arguments: id1 (int), id2 (int).
+        """
+        Supprime un nœud et un nœud de copie inutile qui n'a pas d'enfants.
+        Arguments: id1 (int), id2 (int).
         Returns: None.
-        Description: Deletes a node and a useless copy node that has no children.'''
+        """
         if self.nodes[id2].get_label() == "" and not self.nodes[id2].get_children():
             for parent in list(self.nodes[id1].get_parents()):
                 self.add_node("", {parent:1}, {})
@@ -1752,9 +1384,11 @@ class bool_circ(open_digraph):
             raise Exception("erreur label")
 
     def non_xor(self, id_non, id_xor):
-        '''Arguments: id_non (int), id_xor (int).
+        """
+        Fusionne une porte NOT et une porte XOR en appuyant sur NOT après le XOR.
+        Arguments: id_non (int), id_xor (int).
         Returns: None.
-        Description: Merges a NOT gate and a XOR gate by pushing NOT after the XOR.'''
+        """
         if self.nodes[id_non].get_label() == "~" and self.nodes[id_xor].get_label() == "^":
             for parent in list(self.nodes[id_non].get_parents()):
                 self.add_edge(parent, id_xor)
@@ -1767,9 +1401,11 @@ class bool_circ(open_digraph):
             raise Exception("erreur label")
 
     def non_copie(self, id_non, id_copie):
-        '''Arguments: id_non (int), id_copie (int).
+        """
+        Pousse les portes NON après la copie des nœuds en les dupliquant sur les branches de sortie.
+        Arguments: id_non (int), id_copie (int).
         Returns: None.
-        Description: Pushes NOT gates after copy nodes by duplicating them on the output branches.'''
+        """
         if self.nodes[id_non].get_label() == "~" and self.nodes[id_copie].get_label() == "":
             for parent in list(self.nodes[id_non].get_parents()):
                 self.add_edge(parent, id_copie)
@@ -1781,9 +1417,11 @@ class bool_circ(open_digraph):
             raise Exception("erreur label")
 
     def invo_non(self, id1, id2):
-        '''Arguments: id1 (int), id2 (int).
+        """
+        Fusionne deux portes NON en une connexion directe (suppression de la double négation)
+        Arguments: id1 (int), id2 (int).
         Returns: None.
-        Description: Merges two NOT gates into a direct connection (double negation removal).'''
+        """
         if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "~":
             for parent in list(self.nodes[id1].get_parents()):
                 for child in list(self.nodes[id2].get_children()):
@@ -1794,9 +1432,11 @@ class bool_circ(open_digraph):
             raise Exception("erreur label")
 
     def reecrit(self, id1, id2):
-        '''Arguments: id1 (int), id2 (int).
+        """
+        Applique une règle de réécriture selon les étiquettes et la structure des nœuds. Renvoie « True » en cas de réécriture.
+        Arguments: id1 (int), id2 (int).
         Returns: bool.
-        Description: Applies one rewrite rule depending on node labels and structure. Returns True if rewritten.'''
+        """
         if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "^":
             self.asso_xor(id1, id2)
         elif self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "":
@@ -1818,9 +1458,11 @@ class bool_circ(open_digraph):
         return True
 
     def simplifie(self):
-        '''Arguments: None.
-        Returns: None.
-        Description: Repeatedly applies rewrite rules to simplify the boolean circuit.'''
+        """
+        Applique à plusieurs reprises des règles de réécriture pour simplifier le circuit booléen.
+        Arguments: None
+        Returns: None
+        """
         modifie = False
         for id, node in list(self.nodes.items()):
             if id not in self.nodes:
@@ -1834,9 +1476,11 @@ class bool_circ(open_digraph):
             self.simplifie()
 
     def simplifie_evaluate(self):
-        '''Arguments: None.
+        """
+        Effectue une évaluation simplifiée en combinant l’évaluation logique et la simplification structurelle.
+        Arguments: None.
         Returns: None.
-        Description: Performs a simplified evaluation by combining logic evaluation and structural simplification.'''
+        """
         self.simplifie()
         fini = False
         while not fini:

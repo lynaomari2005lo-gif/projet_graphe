@@ -637,18 +637,7 @@ class InitTest(unittest.TestCase):
         self.assertFalse(half_adder3.is_cyclic())
         half_adder3.display("test_half_addern_3.pdf")
         
-        #test TP12
-        #test encodeur
-        g12 = open_digraph([], [], [ngb])
-        self.assertEqual(g12.assert_is_well_formed(), True )
-        b12 = bool_circ(g12)
-        encodeur = b12.encodeur()
-        encodeur.display("testencodeur.pdf")
-        #test decodeur
-        decodeur = b12.decodeur()
-        decodeur.display("testdecodeur.pdf")
-
-
+        
 
         # Test evaluate
         
@@ -665,21 +654,45 @@ class InitTest(unittest.TestCase):
         xor0 = "((x1)^(x2)^(0))" #ok
         
         g = bool_circ.parse_parentheses(cop1,cop0,non1,non0,et1,et0,ou1,ou0,xor1,xor0)
-        g[0].display("avant_simply")
+        g[0].display("avant_simply.pdf")
         g[0].evaluate_parent()
-        g[0].display("apres_simply")
+        g[0].display("apres_simply.pdf")
         
         # Test additionneur : On fait les calculs pour avoir le résultat final dans le noeud parent du noeud res
         e = '(((1)&(0))&(0))','(((1)&(1))&(0))','(((1)&(1))&(1))'
         # Test sur les entiers 11 et 01 , res = 01
         # Test sur les entiers 111 et 011 et 001 , res = 001
         g = bool_circ.parse_parentheses(e[0],e[1], e[2])
-        g[0].display("add")
+        g[0].display("add.pdf")
         g[0].evaluate_parent()
-        g[0].display("add_apres") 
+        g[0].display("add_apres.pdf") 
 
+        #test encodeur
+        g12 = open_digraph([], [], [ngb])
+        self.assertEqual(g12.assert_is_well_formed(), True )
+        b12 = bool_circ(g12)
+        encodeur = b12.encodeur()
+        encodeur.display("testencodeur.pdf")
+        #test decodeur
+        decodeur = b12.decodeur()
+        decodeur.display("testdecodeur.pdf")
 
+        #test code Hamming
+        encode = bool_circ.encodeur()
+        decode = bool_circ.decodeur()
+        decode.icompose(encode)
+        decode.nodes[10].set_label("1")
+        decode.nodes[8].set_label("0")
+        decode.nodes[7].set_label("0")
+        decode.nodes[9].set_label("1")
+        decode.save_as_dot_file("avant.dot", verbose=True)
 
+        #Injection de ~ entre 17, 45
+        decode.add_node("~", {17:1}, {45:1})
+        decode.remove_edge(17, 45)
+        decode.save_as_dot_file("bruit.dot", verbose=True)
+        decode.simplifie_evaluate()
+        decode.save_as_dot_file("apres.dot", verbose=True)
 
 if __name__ == '__main__' : # the following code is called only when
     unittest.main()         # precisely this file is run
@@ -693,37 +706,3 @@ class NodeTest(unittest.testcase):
     def test_get_label(self):
         self.assertEqual(self.n0.get_label(), 'a')
 
-
-class BoolCircTest(unittest.testcase):
-    def test_hamming_identity(self):
-        print("TEST CODE DE HAMMING")
-
-        # Étape 1 : Créer le message à encoder
-        original = bool_circ.int_bin(6, 4)  # 0110
-
-        # Étape 2 : Encoder
-        enc = bool_circ.encoder()
-        encoded = enc.compose_with(original)
-
-        # Étape 3 : Simuler une erreur (inversion d’un bit)
-        nodes = encoded.get_nodes()
-        for node in nodes:
-            if node.get_label() in ['0', '1']:
-                id_ = node.id
-                # Ajouter une porte NON (~~) au-dessus
-                not_node = node.__class__(9999, '~~', {id_: 1}, {})
-                encoded.add_node(not_node)
-                encoded.add_edge(not_node.id, id_)
-                break
-
-        # Étape 4 : Décoder
-        dec = bool_circ.decoder()
-        result = dec.compose_with(encoded)
-
-        # Étape 5 : Appliquer les réécritures
-        result.rewrite_all()
-        result.display("Final")
-
-        # Pas d’assertion automatique ici, mais affichage du graphe corrigé
-
-            
