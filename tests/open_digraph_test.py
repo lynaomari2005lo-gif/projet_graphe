@@ -558,17 +558,17 @@ class InitTest(unittest.TestCase):
         # Test parenthèses
         expr = "((~(( (x0))&(x1)))|(x2))"
         circuit = bool_circ.parse_parentheses(expr)
-        circuit[0].display("pp")
+        circuit[0].display("pp.pdf")
         
         expr1 = "(((x0)&((x1)&(x2)))|((x1)&(~(x2))))"
         expr2 = "(((x0)&(~(x1)))|(x2))"
         g = bool_circ.parse_parentheses(expr1,expr2)
-        g[0].display("pp2")
+        g[0].display("pp2.pdf")
         
         # Test int_bin
         g = bool_circ.int_bin(11,8)
-        g.display('bin')
-
+        g.display('bin.pdf')
+        
         #Test genere_bool_circ (avec inputs et outputs)
         ngb = node(0, '0', {}, {})
         ggb = open_digraph([], [], [ngb])
@@ -577,6 +577,8 @@ class InitTest(unittest.TestCase):
         soph = bb.genere_bool_circ(7,2,2)
         soph.display("testgenereboolcirc.pdf")
         print(soph)
+        
+        
         #Test build_addern
         
         #test build_adder0
@@ -681,18 +683,18 @@ class InitTest(unittest.TestCase):
         encode = bool_circ.encodeur()
         decode = bool_circ.decodeur()
         decode.icompose(encode)
-        decode.nodes[10].set_label("1")
-        decode.nodes[8].set_label("0")
-        decode.nodes[7].set_label("0")
-        decode.nodes[9].set_label("1")
-        decode.save_as_dot_file("avant.dot", verbose=True)
+        decode.nodes[36].set_label("1")
+        decode.nodes[39].set_label("0")
+        decode.nodes[38].set_label("0")
+        decode.nodes[37].set_label("1")
+        decode.display("avant.pdf")
 
         #Injection de ~ entre 17, 45
-        decode.add_node("~", {17:1}, {45:1})
-        decode.remove_edge(17, 45)
-        decode.save_as_dot_file("bruit.dot", verbose=True)
+        #decode.add_node("~", {17:1}, {45:1})
+        #decode.remove_edge(17, 45)
+        decode.display("bruit.pdf")
         decode.simplifie_evaluate()
-        decode.save_as_dot_file("apres.dot", verbose=True)
+        decode.display("apres.pdf")
 
 if __name__ == '__main__' : # the following code is called only when
     unittest.main()         # precisely this file is run

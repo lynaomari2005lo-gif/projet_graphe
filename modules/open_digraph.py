@@ -1127,8 +1127,8 @@ class bool_circ(open_digraph):
         while self.simplify_once():
             pass
 
-    
-    def encodeur(self):
+    @classmethod
+    def encodeur(cls):
         g = open_digraph.empty()
 
         b1 = g.add_node(" ", {}, {})
@@ -1160,9 +1160,10 @@ class bool_circ(open_digraph):
         for i in [b1, b2, b3, b4, xor1, xor2, xor3]:
             g.add_output_node(i)
 
-        return bool_circ(g)
+        return cls(g)
 
-    def decodeur(self):
+    @classmethod
+    def decodeur(cls):
         g = open_digraph.empty()
         b1 = g.add_node(" ", {}, {})
         b2 = g.add_node(" ", {}, {})
@@ -1191,7 +1192,7 @@ class bool_circ(open_digraph):
         g.add_output_node(xor2)
         g.add_output_node(xor3)
         g.add_output_node(xor4)
-        return bool_circ(g)
+        return cls(g)
     
     def copies(self, id_log, id_in):
         """
@@ -1267,7 +1268,7 @@ class bool_circ(open_digraph):
             new_non = self.add_node("~", {}, self.nodes[id_log].get_children())
             for child in list(self.nodes[id_log].get_children()):
                 self.remove_parallel_edges(id_log, child)
-            self.add_edge(id_log, new_non)
+            self.add_edge(self.get_node_by_id(id_log), self.get_node_by_id(new_non))
         elif self.nodes[id_in].get_label() == "0":
             self.remove_node_by_id(id_in)
         else:
@@ -1294,7 +1295,7 @@ class bool_circ(open_digraph):
         """
         if self.nodes[id_in].get_label() in ["|", "^", "&"]:
             self.neutres(id_in)
-        elif self.nodes[id_log].get_label() == "":
+        elif self.nodes[id_log].get_label() == " ":
             self.copies(id_log, id_in)
         elif self.nodes[id_log].get_label() == "~":
             self.non(id_log, id_in)
@@ -1325,7 +1326,7 @@ class bool_circ(open_digraph):
         for id, node in list(self.nodes.items()):
             if node.get_label() in ["|", "^", "&"]:
                 self.logique(-1, id)
-            if node.get_label() == "":
+            if node.get_label() == " ":
                 self.remove_node_by_id(id)
 
     def asso_xor(self, id1, id2):
@@ -1336,7 +1337,7 @@ class bool_circ(open_digraph):
         """
         if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "^":
             for parent in list(self.nodes[id1].get_parents()):
-                self.add_edge(parent, id2)
+                self.add_edge(self.get_node_by_id(parent), self.get_node_by_id(id2))
             self.remove_node_by_id(id1)
         else:
             raise Exception("erreur label")
@@ -1347,9 +1348,9 @@ class bool_circ(open_digraph):
         Arguments: id1 (int), id2 (int)
         Returns: None
         """
-        if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "":
+        if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == " ":
             for child in list(self.nodes[id2].get_children()):
-                self.add_edge(id1, child)
+                self.add_edge(self.get_node_by_id(id1), self.get_node_by_id(child))
             self.remove_node_by_id(id2)
         else:
             raise Exception("erreur label")
@@ -1360,12 +1361,12 @@ class bool_circ(open_digraph):
         Arguments: id_xor (int), id_copie (int).
         Returns: None.
         """
-        if self.nodes[id_xor].get_label() == "^" and self.nodes[id_copie].get_label() == "":
+        if self.nodes[id_xor].get_label() == "^" and self.nodes[id_copie].get_label() == " ":
             if self.nodes[id_xor].get_parents()[id_copie] % 2 == 0:
                 self.remove_parallel_edges(id_copie, id_xor)
             else:
                 self.remove_parallel_edges(id_copie, id_xor)
-                self.add_edge(id_copie, id_xor)
+                self.add_edge(self.get_node_by_id(id_copie), self.get_node_by_id(id_xor))
         else:
             raise Exception("erreur label")
 
@@ -1396,7 +1397,7 @@ class bool_circ(open_digraph):
             id_non = self.add_node("~", {}, self.nodes[id_xor].get_children())
             for child in list(self.nodes[id_xor].get_children()):
                 self.remove_parallel_edges(id_xor, child)
-            self.add_edge(id_xor, id_non)
+            self.add_edge(self.get_node_by_id(id_xor), self.get_node_by_id(id_non))
         else:
             raise Exception("erreur label")
 
@@ -1406,9 +1407,9 @@ class bool_circ(open_digraph):
         Arguments: id_non (int), id_copie (int).
         Returns: None.
         """
-        if self.nodes[id_non].get_label() == "~" and self.nodes[id_copie].get_label() == "":
+        if self.nodes[id_non].get_label() == "~" and self.nodes[id_copie].get_label() == " ":
             for parent in list(self.nodes[id_non].get_parents()):
-                self.add_edge(parent, id_copie)
+                self.add_edge(self.get_node_by_id(parent), self.get_node_by_id(id_copie))
             self.remove_node_by_id(id_non)
             for child in list(self.nodes[id_copie].get_children()):
                 self.add_node("~", {id_copie:1}, {child:1})
@@ -1425,7 +1426,7 @@ class bool_circ(open_digraph):
         if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "~":
             for parent in list(self.nodes[id1].get_parents()):
                 for child in list(self.nodes[id2].get_children()):
-                    self.add_edge(parent, child)
+                    self.add_edge(self.get_node_by_id(parent), self.get_node_by_id(child))
             self.remove_node_by_id(id1)
             self.remove_node_by_id(id2)
         else:
@@ -1439,9 +1440,9 @@ class bool_circ(open_digraph):
         """
         if self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "^":
             self.asso_xor(id1, id2)
-        elif self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "":
+        elif self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == " ":
             self.asso_copie(id1, id2)
-        elif self.nodes[id2].get_label() == "^" and self.nodes[id1].get_label() == "":
+        elif self.nodes[id2].get_label() == "^" and self.nodes[id1].get_label() == " ":
             if self.nodes[id2].get_parents()[id1] <2:
                 return False
             self.invo_xor(id2, id1)
@@ -1449,7 +1450,7 @@ class bool_circ(open_digraph):
             self.effacement(id1, id2)
         elif self.nodes[id1].get_label() == "~" and self.nodes[id2].get_label() == "^":
             self.non_xor(id1, id2)
-        elif self.nodes[id1].get_label() == "~" and self.nodes[id2].get_label() == "":
+        elif self.nodes[id1].get_label() == "~" and self.nodes[id2].get_label() == " ":
             self.non_copie(id1, id2)
         elif self.nodes[id1].get_label() == self.nodes[id2].get_label() and self.nodes[id2].get_label() == "~":
             self.invo_non(id1, id2)
